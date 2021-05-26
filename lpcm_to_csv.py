@@ -10,7 +10,7 @@ import sys
 # Variables for unpacking
 import record_constant.samplingRate
 
-supported_formats = ['.wav', '.wave', '.aifc', 'aiff']
+supported_formats = ['wav', 'wave', 'aifc', 'aiff']
 
 if sys.argv.length != 2 :
   print('Wrong number of arguements.')
@@ -24,11 +24,16 @@ if '.' not in filename:
 extension = filename.split(".")[1]
 if extension not in supported_formats:
   print('Not a supported file format.')
-  quit()  
-
-with wave.open(fileName, 'rb') as w_file:
-  channels = wave.getnchannels()
-  number_of_frames = wave.getnframes()
-  with open(fileName[:-4] + '.csv', 'w', newline='') as csvfile:
-    csv_writer = csv.writer(csvfile, delimiter=' ')
-    
+  quit()
+  
+with open(fileName.split(".")[0] + '.csv', 'w', newline='') as csvfile:
+      csv_writer = csv.writer(csvfile, delimiter=' ')  
+      if extension in ['wav', 'wave']:
+        with wave.open(fileName, 'rb') as w_file:
+          channels = wave.getnchannels()
+          number_of_frames = wave.getnframes()
+          
+      else:
+        with aifc.open(fileName, 'rb') as a_file:
+          channels = aifc.getnchannels()
+          number_of_frames = aifc.getnframes()
