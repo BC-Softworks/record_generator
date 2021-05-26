@@ -34,7 +34,7 @@ with wave.open(filename, 'rb') as wav:
   auto_data = np.frombuffer(wav.readframes(numframes), dtype=np.byte)
   merged = np.zeros((numframes//numch,), dtype=np.byte)
   
-  csvfile = open(filename.split(".")[0] + '.csv', 'a', newline='')
+  csvfile = open(filename.split(".")[0] + '.csv', 'w', newline='')
   for i in range(0, numch):
     print ("Extracting {} / {} channels, {} depth".format(i+1, numch, bit_depth))
     ch_data = auto_data[i:numframes:numch]
@@ -47,5 +47,6 @@ with wave.open(filename, 'rb') as wav:
       merged[i] = (merged[i]-2**bit_depth)
     elif merged[i] == 2**(bit_depth - 1):
       merged[i] = 0
-    csvfile.write(merged[i] + ',')
+  str = [",".join(item) for item in merged.astype(str)]
+  csv.write(str)
   csvfile.close()  
