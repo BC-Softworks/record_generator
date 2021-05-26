@@ -28,6 +28,8 @@ if extension not in supported_formats:
   
 with wave.open(filename, 'rb') as wav:
   numframes = wav.getnframes()
+  if numframes % 2 == 1:
+    numframes -= 1
   numch = wav.getnchannels()
   depth = wav.getsampwidth()
   bit_depth = depth*8;
