@@ -18,5 +18,8 @@ if sys.argv[1].endswith('.wav') :
 filename = sys.argv[1]
 
 with wave.open(fileName, 'rb') as w_file:
+  channels = wave.getnchannels()
+  number_of_frames = wave.getnframes()
   with open(fileName[:-4] + '.csv', 'w', newline='') as csvfile:
+    csv_writer = csv.writer(csvfile, delimiter=' ')
     
