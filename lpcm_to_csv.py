@@ -29,15 +29,18 @@ extension = filename.split(".")[1]
 if extension not in supported_formats:
   print('Not a supported file format.')
   quit()
+
+def getbytesarray(λ):
+  with λ.open(fileName, 'rb') as file:
+    number_of_frames = λ.getnframes()
+    return np.frombuffer(file.readframes(numframes), np.byte)
   
+if extension in ['wav', 'wave']:
+  getbytesarray(wave)
+else:
+  getbytesarray(afic)
+
 with open(fileName.split(".")[0] + '.csv', 'w', newline='') as csvfile:
       csv_writer = csv.writer(csvfile, delimiter=' ')  
-      if extension in ['wav', 'wave']:
-        with wave.open(fileName, 'rb') as w_file:
-          channels = wave.getnchannels()
-          number_of_frames = wave.getnframes()
+      
           
-      else:
-        with aifc.open(fileName, 'rb') as a_file:
-          channels = aifc.getnchannels()
-          number_of_frames = aifc.getnframes()
