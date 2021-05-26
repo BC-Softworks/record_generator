@@ -11,7 +11,7 @@ import sys
 
 supported_formats = ['wav', 'wave']
 
-if sys.argv.length != 2 :
+if len(sys.argv) != 2 :
   print('Wrong number of arguements.')
   quit()
   
@@ -26,17 +26,17 @@ if extension not in supported_formats:
   quit()
 
   
-with wave.open(fileName, 'rb') as wav:
-  number_of_frames = wav.getnframes()
+with wave.open(filename, 'rb') as wav:
+  numframes = wav.getnframes()
   numch = wav.getnchannels()
   depth = wav.getsampwidth()
   bit_depth = depth*8;
-  auto_data = np.frombuffer(w.readframes(numframes), dtype=np.byte)
-  merged = np.zeros((numframes,), dtype=np.byte)
-  with open(fileName.split(".")[0] + '.csv', 'w', newline='') as csvfile:
+  auto_data = np.frombuffer(wav.readframes(numframes), dtype=np.byte)
+  merged = np.zeros((numframes/numch,), dtype=np.byte)
+  with open(filename.split(".")[0] + '.csv', 'w', newline='') as csvfile:
     for i in range(0, numch):
       print ("Extracting {} / {} channels, {} depth".format(i+1, numch, bit_depth))
-      ch_data = auto_data[channel::nch]
+      ch_data = auto_data[i::numch]
       merged = np.add(merged, ch_data)
     merged = np.divide(merged, numch)
     # Normalize data and append to csv  
