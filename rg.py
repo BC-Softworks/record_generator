@@ -11,7 +11,7 @@ def generatecircumference(theta r):
 
 #Add z position to each vector of x and y
 def setzpos(arr):
-  return (map(lambda lst : lst.append(recordHeight), arr), map(lambda lst: lst.append(0), arr))
+  return (np.asarray(map(lambda lst : lst.append(recordHeight), arr)), np.asarray(map(lambda lst: lst.append(0), arr)))
 
 # Combine the vectors in to an outer and inner circle
 def calculaterecordshape():
