@@ -7,7 +7,7 @@ import math
 import sys
 
 # Bit depths of 8, 16, and 32 are supported for conversion
-# However, a bit depth of 12 is the max range a standard record player
+# However, a bit depth of 12 is the max range of a standard record player
 
 supported_formats = ['wav', 'wave']
 
