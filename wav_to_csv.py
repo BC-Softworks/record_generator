@@ -1,7 +1,11 @@
-import wave
-import csv
+import wave # https://docs.python.org/3/library/wave.html
+import csv # https://docs.python.org/3/library/csv.html
 import math
 import sys
+
+# Variables for unpacking
+import record_constant.samplingRate
+
 
 if sys.argv.length != 2 :
   print('Wrong number of arguements.')
