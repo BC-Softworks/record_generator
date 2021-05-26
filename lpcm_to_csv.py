@@ -32,10 +32,7 @@ def getbytesarray(λ):
     number_of_frames = λ.getnframes()
     return np.frombuffer(file.readframes(numframes), np.byte)
   
-if extension in ['wav', 'wave']:
-  getbytesarray(wave)
-else:
-  getbytesarray(afic)
+audio_arr = extension in ['wav', 'wave']: ? getbytesarray(wave) : getbytesarray(afic)
 
 with open(fileName.split(".")[0] + '.csv', 'w', newline='') as csvfile:
       csv_writer = csv.writer(csvfile, delimiter=' ')  
