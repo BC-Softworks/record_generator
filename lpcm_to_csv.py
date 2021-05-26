@@ -39,7 +39,7 @@ with wave.open(fileName, 'rb') as wav:
       ch_data = auto_data[channel::nch]
       merged = np.add(merged, ch_data)
     # Normalized data and append to csv  
-    for i in range(0, numch)
+    for i in range(0, numch):
       if merged[i] > 2**(bit_depth - 1):
         merged[i] = (merged[i]-2**bit_depth)
       elif merged[i] == 2**(bit_depth - 1):
