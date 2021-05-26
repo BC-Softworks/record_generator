@@ -10,6 +10,9 @@ import sys
 
 # Variables for unpacking
 import record_constant.samplingRate
+bitdepth = 8
+# Bit depths of 8, 12, 16, and 24 are supported for conversion
+# However, a bit depth of 12 is the max range a standard record player
 
 supported_formats = ['wav', 'wave', 'aifc', 'aiff']
 
