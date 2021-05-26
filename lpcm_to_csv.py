@@ -38,7 +38,8 @@ with wave.open(fileName, 'rb') as wav:
       print ("Extracting {} / {} channels, {} depth".format(i+1, numch, bit_depth))
       ch_data = auto_data[channel::nch]
       merged = np.add(merged, ch_data)
-    # Normalized data and append to csv  
+    merged = np.divide(merged, numch)
+    # Normalize data and append to csv  
     for i in range(0, numch):
       if merged[i] > 2**(bit_depth - 1):
         merged[i] = (merged[i]-2**bit_depth)
