@@ -4,6 +4,7 @@
 import aifc # https://docs.python.org/3/library/aifc.html
 import wave # https://docs.python.org/3/library/wave.html
 import csv  # https://docs.python.org/3/library/csv.html
+import numpy as np # https://numpy.org/
 import math
 import sys
 
