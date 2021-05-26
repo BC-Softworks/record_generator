@@ -47,5 +47,5 @@ with wave.open(filename, 'rb') as wav:
       merged[i] = (merged[i]-2**bit_depth)
     elif merged[i] == 2**(bit_depth - 1):
       merged[i] = 0
-    csvfile.append(merged[i] + ',')
+    csvfile.write(merged[i] + ',')
   csvfile.close()  
