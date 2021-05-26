@@ -47,6 +47,6 @@ with wave.open(filename, 'rb') as wav:
       merged[i] = (merged[i]-2**bit_depth)
     elif merged[i] == 2**(bit_depth - 1):
       merged[i] = 0
-  str = [",".join(item) for item in merged.astype(str)]
-  csv.write(str)
+  for item in merged.astype(str):
+    csvfile.write(item + ',')
   csvfile.close()  
