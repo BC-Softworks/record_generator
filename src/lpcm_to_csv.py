@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+# Runs on Python 3.8 and above
 # Used for converting multi and single channel uncompressed
 # audio to a single waveform for analog transcription.
 
@@ -22,12 +25,15 @@ def wavetocsv():
     merged = np.zeros((numframes//numch,), dtype=np.byte)
 
     csvfile = open(filename.split(".")[0] + '.csv', 'w', newline='')
+    
+    # Averages the wave for each channel
     for i in range(0, numch):
       print ("Extracting {} / {} channels, {} depth".format(i+1, numch, bit_depth))
       ch_data = auto_data[i:numframes:numch]
       print(len(ch_data))
       merged = np.add(merged, ch_data)
     merged = np.divide(merged, numch)
+    
     # Normalize data and append to csv  
     for i in range(0, numch):
       if merged[i] > 2**(bit_depth - 1):
