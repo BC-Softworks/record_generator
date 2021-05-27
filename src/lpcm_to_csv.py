@@ -13,6 +13,8 @@ import sys
 # However, a bit depth of 12 is the max range of a standard record player
 
 supported_formats = ['wav', 'wave']
+create_single_channel_copy = true
+
 def wavetocsv():
   with wave.open(filename, 'rb') as wav:
     numframes = wav.getnframes()
@@ -43,6 +45,7 @@ def wavetocsv():
     for item in merged.astype(str):
       csvfile.write(item + ',')
     csvfile.close()
+    return (merged, depth)
 
 def main():
   if len(sys.argv) != 2 :
