@@ -1,4 +1,4 @@
-import cmath.tau
+import tau from cmath
 import numpy as np
 import math
 from stl import mesh
@@ -6,8 +6,8 @@ from record_constant import *
 
 # Generate circumference of record
 # Recursive call comes first to to order of evaluation
-def generatecircumference(theta r):
-  return generatecircumference(theta + incrNum, r) + [radius + r * sin(theta), radius + r * cos(theta)] if theta < cmath.tau else [radius, radius + r]
+def generatecircumference(theta, r):
+  return generatecircumference(theta + incrNum, r) + [radius + r * sin(theta), radius + r * cos(theta)] if theta < tau else [radius, radius + r]
 
 #Add z position to each vector of x and y
 def setzpos(arr):
