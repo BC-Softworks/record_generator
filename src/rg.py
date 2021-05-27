@@ -1,4 +1,4 @@
-import tau from cmath
+from cmath import tau
 import numpy as np
 import math
 from stl import mesh
