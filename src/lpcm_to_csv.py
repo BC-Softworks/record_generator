@@ -11,21 +11,6 @@ import sys
 
 supported_formats = ['wav', 'wave']
 def wavetocsv():
-  if len(sys.argv) != 2 :
-    print('Wrong number of arguements.')
-    quit()
-  
-  filename = sys.argv[1]
-  if '.' not in filename:
-    print('File extension must be provided.')
-    quit()    
-  
-  extension = filename.split(".")[1]
-  if extension not in supported_formats:
-    print('Not a supported file format.')
-    quit()
-
-  
   with wave.open(filename, 'rb') as wav:
     numframes = wav.getnframes()
     if numframes % 2 == 1:
@@ -51,5 +36,23 @@ def wavetocsv():
         merged[i] = 0
     for item in merged.astype(str):
       csvfile.write(item + ',')
-    csvfile.close()  
-wavetocsv()
+    csvfile.close()
+
+def main():
+  if len(sys.argv) != 2 :
+    print('Wrong number of arguements.')
+    quit()
+  
+  filename = sys.argv[1]
+  if '.' not in filename:
+    print('File extension must be provided.')
+    quit()    
+  
+  extension = filename.split(".")[1]
+  if extension not in supported_formats:
+    print('Not a supported file format.')
+    quit()
+  
+  wavetocsv(filename)
+  
+main()  
