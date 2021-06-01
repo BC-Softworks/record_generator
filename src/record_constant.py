@@ -1,6 +1,5 @@
 # Define variables
 import cmath.tau
-from functools import reduce
 
 samplingRate = 44100 # 44.1khz audio
 rpm = 45
@@ -20,4 +19,5 @@ bevel = 0.5 # bevelled groove edge
 grooveWidth = 1/300 # in 600dpi pixels
 incrNum = tau / thetaIter # calculcate angular incrementation amount
 radIncr = (grooveWidth + 2 * bevel * amplitude) / thetaIter  # calculate radial incrementation amount
-rateDivisor = 0 # Not sure what this should be yet
+rateDivisor = 4.0 # Not sure what this should be yet
+

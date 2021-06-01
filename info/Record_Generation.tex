@@ -5,7 +5,7 @@
 
 \setlength{\parindent}{4em}
 \setlength{\parskip}{1em}
-\renewcommand{\baselinestretch}{1.5}
+\renewcommand{\baselinestretch}{1.25}
 
 
 \begin{document}
@@ -23,6 +23,8 @@ Most commercially avaliable uncompressed audio formats use LPCM encoding. Linear
 
 Translating the wavelength is a little less trivial.
 
+Thus each segement in the groove is calculated using the following formulas, where ou is the outer upper edge of the groove, where ol is the outer lower edge of the groove, where il is the inner lower edge of the groove, where iu is the inner upper edge of the groove. 
+
 \begin{equation}
 ou(r,A,\beta,\theta) = (r+(r+A*\beta) * cos(\theta),r+(r+A*\beta)*sin(\theta))
 \end{equation}
@@ -35,5 +37,11 @@ il(r,A,\theta) = (r+(r-gW)*cos(\theta), r+(r-gW)*sin(\theta))
 \begin{equation}
 iu(r,A,\theta) = (r+(r-gW-A*\beta)*cos(\theta), r+(r-gW-A*\beta)*sin(\theta))
 \end{equation}
+\begin{itemize}
+\item r = radius
+\item A = amplitude of the wave
+\item $\beta$ = bevel of the groove
+\item $\theta$ = angle in degrees
+\end{itemize}
 \end{normalsize}
 \end{document}
