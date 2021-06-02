@@ -16,4 +16,4 @@ requests-toolbelt==0.9.1
 six==1.15.0
 smmap==3.0.5
 tqdm==4.57.0
-urllib3==1.26.4
+urllib3==1.26.5
