@@ -1,7 +1,9 @@
 # Define variables
-import tau from cmath
 from bidict import bidict
+import numpy as np
+import math
 
+tau = 2 * math.pi
 samplingRate = 44100 # 44.1khz audio
 rpm = 45
 downsampling = 4
@@ -18,19 +20,33 @@ amplitude = (24 * micronsPerLayer) / micronsPerInch # 24 is the amplitude of sig
 depth = (6 * micronsPerLayer) / micronsPerInch # 6 is the measured in 16 microns steps, depth of tops of wave in groove from uppermost surface of record
 bevel = 0.5 # bevelled groove edge
 grooveWidth = 1/300 # in 600dpi pixels
-incrNum = tau // thetaIter # calculcate angular incrementation amount
+incrNum = tau / thetaIter # calculcate angular incrementation amount
 radIncr = (grooveWidth + 2 * bevel * amplitude) / thetaIter  # calculate radial incrementation amount
 rateDivisor = 4.0 # Not sure what this should be yet
 
-class 3DVertex:
-    def __init__(self, f, xyz):
-        self.f = f
-        self.x, self.y, self.z = xyz
+def print_constants():
+    print("Record constants")
+    print("samplingRate: {}".format(samplingRate))
+    print("rpm: {}".format(rpm))
+    print("downsampling: {}".format(downsampling))
+    print("thetaIter: {}".format(thetaIter))
+    print("diameter: {}".format(diameter))
+    print("radius: {}".format(radius))
+    print("innerHole: {}".format(innerHole))
+    print("innerRad: {}".format(innerRad))
+    print("outerRad: {}".format(outerRad))
+    print("recordHeight {}".format(recordHeight))
+    print("micronsPerInch {}".format(micronsPerInch))
+    print("micronsPerLayer {}".format(micronsPerLayer))
+    print("amplitude {}".format(amplitude))
+    print("depth {}".format(depth))
+    print("bevel {}".format(bevel))
+    print("grooveWidth {}".format(grooveWidth))
+    print("incrNum {}".format(incrNum))
+    print("radIncr {}".format(radIncr))
+    print("rateDivisor: {}".format(rateDivisor))
 
-    def __str__(self):
-        return ','.join([self.f, self.x, self.y, self.z])
-
-class 3DShape:
+class _3DShape:
     def __init__(self, dict={}):
         self.vertices = bidict(dict)
         self.faces = []
@@ -44,6 +60,13 @@ class 3DShape:
         return index
 
     def add_face(self, point_a, point_b, point_c):
-        self.faces.append([self.point_a, self.point_b, self.point_c])
-
+        points = [self.point_a, self.point_b, self.point_c]
+        self.faces.append([vertices.inverse[x] for x in points])
+    
+    def get_vertices(self):
+        lst = [self.vertices[i] for i in range(0, len(self.vertices))]
+        return np.array(lst)
+    
+    def get_faces(self):
+        return np.array(self.faces)
 
