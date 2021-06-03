@@ -18,7 +18,7 @@ amplitude = (24 * micronsPerLayer) / micronsPerInch # 24 is the amplitude of sig
 depth = (6 * micronsPerLayer) / micronsPerInch # 6 is the measured in 16 microns steps, depth of tops of wave in groove from uppermost surface of record
 bevel = 0.5 # bevelled groove edge
 grooveWidth = 1/300 # in 600dpi pixels
-incrNum = tau / thetaIter # calculcate angular incrementation amount
+incrNum = tau // thetaIter # calculcate angular incrementation amount
 radIncr = (grooveWidth + 2 * bevel * amplitude) / thetaIter  # calculate radial incrementation amount
 rateDivisor = 4.0 # Not sure what this should be yet
 
@@ -39,11 +39,11 @@ class 3DShape:
         return self.vertices
 
     def add_vertex(self, xyz):
-        index = len(vertices)
-        vertices[index] = xyz
+        index = len(self.vertices)
+        self.vertices[index] = xyz
         return index
 
     def add_face(self, point_a, point_b, point_c):
-        faces.append([self.point_a, self.point_b, self.point_c])
+        self.faces.append([self.point_a, self.point_b, self.point_c])
 
 
