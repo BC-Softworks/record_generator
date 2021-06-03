@@ -1,5 +1,6 @@
 # Define variables
-import cmath.tau
+import tau from cmath
+from bidict import bidict
 
 samplingRate = 44100 # 44.1khz audio
 rpm = 45
@@ -21,11 +22,28 @@ incrNum = tau / thetaIter # calculcate angular incrementation amount
 radIncr = (grooveWidth + 2 * bevel * amplitude) / thetaIter  # calculate radial incrementation amount
 rateDivisor = 4.0 # Not sure what this should be yet
 
-class 3DShape:
+class 3DVertex:
     def __init__(self, f, xyz):
         self.f = f
         self.x, self.y, self.z = xyz
 
     def __str__(self):
         return ','.join([self.f, self.x, self.y, self.z])
+
+class 3DShape:
+    def __init__(self, dict={}):
+        self.vertices = bidict(dict)
+        self.faces = []
+
+    def __str__(self):
+        return self.vertices
+
+    def add_vertex(self, xyz):
+        index = len(vertices)
+        vertices[index] = xyz
+        return index
+
+    def add_face(self, point_a, point_b, point_c):
+        faces.append([self.point_a, self.point_b, self.point_c])
+
 
