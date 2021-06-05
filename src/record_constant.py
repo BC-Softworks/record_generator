@@ -19,7 +19,7 @@ diameter = 7 # diameter of record in inches
 radius = truncate(diameter / 2, precision) # radius of record inches
 innerHole = 1.5 # For 33 1/3 rpm 0.286 # diameter of center hole in inches
 innerRad = truncate(0.7 * (47/20), precision) # radius of innermost groove in inches
-outerRad = truncate(0.7 * 4.8, precision)  # radius of outermost groove in inches
+outerRad = truncate(3.2, precision)  # radius of outermost groove in inches
 recordHeight = rH = truncate(1/8, precision)
 micronsPerInch = 25400
 micronsPerLayer = 16 # microns per vertical print layer

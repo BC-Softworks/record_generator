@@ -164,5 +164,5 @@ def main(filename, stlname, pickling=False):
 
 #Run program
 if __name__ == '__main__':
-    print("\n"); print_constants(); print("\n")
+    #print("\n"); print_constants(); print("\n")
     main("audio/sample.csv", "sample_engraved")
