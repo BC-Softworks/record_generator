@@ -154,7 +154,7 @@ def main(filename, stlname, pickling=False):
   
   print("Post-engraving vertices: " + str(len(vertices)))
   print("Post-engraving faces: " + str(len(faces)))
-  full_mesh.save("stl/" + stlname + ".stl")
+  full_mesh.save("stl/" + stlname + ".stl", mode=stl.Mode.BINARY)
   print("Done.")
 
 #Run program
