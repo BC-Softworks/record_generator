@@ -78,9 +78,7 @@ def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
       lst = outer + inner
       lastEdge = inner
       
-      for vertex in lst:
-          #print(str(vertex) + " " + str(vertex in shape.get_vertices()))
-          shape.add_vertex(vertex)
+      shape.add_vertices(lst)
 
       
       #Connect verticies
@@ -91,8 +89,7 @@ def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
           
           #Complete beginning cap if necessary
           s1 = [ou(r, amplitude, bevel, theta, rH), iu(r, amplitude, bevel, theta, rH)]
-          for vertex in s1:
-              shape.add_vertex(vertex)
+          shape.add_vertices(s1)
           shape.tristrip(s1,s1);
           
       else:    
@@ -109,25 +106,19 @@ def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
   stop1 = [ou(r, amplitude, bevel, theta, rH), iu(r, amplitude, bevel, theta, rH)]
   stop2 = [ol(r, theta, gH), il(r, theta, gH)]
   cap = stop1 + stop2
-  
-  for i in range(0,4):
-    shape.add_vertex(cap[i])
+  shape.add_vertices(cap)
 
   #Draw triangles
   shape.tristrip(stop1,stop2);
 
   #Fill in around cap
-  stop3 = [lastEdge[-1]]
-  stop3.append((r+innerHole/2*math.cos(theta), r+innerHole/2*math.sin(theta), rH))
+  stop3 = [lastEdge[-1], (r+innerRad*math.cos(0), r+innerRad*math.sin(0), rH)]
   shape.add_vertex(stop3[1])
   shape.tristrip(stop1, stop3)
 
   #Close remaining space between last groove and center hole
-  remainingSpace, _ = setzpos(generatecircumference(0, innerHole / 2))
-  for v in remainingSpace:
-    shape.add_vertex(v)
-  
-  
+  remainingSpace, _ = setzpos(generatecircumference(0, innerRad))
+  shape.add_vertices(remainingSpace)
   shape.tristrip(lastEdge, remainingSpace)
 
   return shape
@@ -171,5 +162,5 @@ def main(filename, stlname, pickling=False):
 
 #Run program
 if __name__ == '__main__':
-    #print("\n"); print_constants(); print("\n")
+    print("")
     main("audio/sample.csv", "sample_engraved")

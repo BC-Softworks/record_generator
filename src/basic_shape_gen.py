@@ -40,21 +40,27 @@ def calculate_record_shape() -> mesh.Mesh:
   #Create vector lists
   (outerEdgeUpper, outerEdgeLower) = setzpos(generatecircumference(0, radius))
   (centerHoleUpper, centerHoleLower) = setzpos(generatecircumference(0, innerHole / 2))
+  (spacingUpper, spacingLower) = setzpos(generatecircumference(0, innerRad))
   
   print("Condense vertices into a single list")
   outer = outerEdgeUpper + outerEdgeLower
   center = centerHoleUpper + centerHoleLower
-  lst = outer + center
+  spacing = spacingUpper + spacingLower
+  lst = outer + center + spacing
 
   print("Add vertices to shape")
-  for vertex in lst:
-      recordShape.add_vertex(vertex)
+  recordShape.add_vertices(lst)
 
   #Set faces
   print("Connecting vertices")
-  recordShape.tristrip(centerHoleUpper, centerHoleLower)
-  recordShape.tristrip(centerHoleLower, outerEdgeLower)
+  recordShape.tristrip(spacingLower, outerEdgeLower)
   recordShape.tristrip(outerEdgeLower, outerEdgeUpper)
+  
+  recordShape.tristrip(centerHoleUpper, spacingUpper)
+  recordShape.tristrip(centerHoleLower, spacingLower)
+  recordShape.tristrip(spacingLower, spacingUpper)
+  recordShape.tristrip(centerHoleUpper, centerHoleLower)
+
   
   return recordShape
 
@@ -88,7 +94,7 @@ def main():
   # Save mesh for debugging purposes
   record_mesh = shape_to_mesh(recordShape)
   print("Saving file to {}".format(filename))
-  record_mesh.save("../stl/" + filename)
+  record_mesh.save("stl/" + filename)
 
 if __name__ == '__main__':
   main()
