@@ -13,88 +13,8 @@ from matplotlib import pyplot
 import record_constant
 from record_constant import *
 
-## From basic_shape_gen
-
-# Generate circumference of record
-# Recursive call comes first to to order of evaluation
-def generatecircumference(t, r) -> list:
-  lst = []
-  while t < record_constant.tau:
-    lst.append([radius + r * math.sin(t), radius + r * math.cos(t)])
-    # Increasing incrNum for circumference to speed up processing
-    # and shave off vertices unnecessary vertices
-    # Consider creating seperate constant in record_constant for this function
-    t += truncate(incrNum * 35, precision)
-
-  return lst
-
-#Add z position to each vector of x and y
-def setzpos(arr) -> tuple:
-  x = list()
-  y = list()
-  for lst in arr:
-      x = x + [(lst[0], lst[1], rH)]
-      y = y + [(lst[0], lst[1], 0.0)]
-  
-  assert len(x[0]) == 3
-  return (x , y)
-
-##
-## From https://pypi.org/project/numpy-stl/
-# Slightly optimized
-# find the max dimensions, so we can know the bounding box, getting the height,
-# width, length (because these are the step size)...
-def find_mins_maxs(obj):
-    return obj.x.min(), obj.x.max(), obj.y.min(), obj.y.max(), obj.z.min(), obj.z.max()
-
-
-def translate(_solid, step, padding, multiplier, axis):
-    if 'x' == axis:
-        items = 0, 3, 6
-    elif 'y' == axis:
-        items = 1, 4, 7
-    elif 'z' == axis:
-        items = 2, 5, 8
-    else:
-        raise RuntimeError('Unknown axis %r, expected x, y or z' % axis)
-
-    # _solid.points.shape == [:, ((x, y, z), (x, y, z), (x, y, z))]
-    _solid.points[:, items] += (multiplier * step) + (multiplier * padding)
-
-
-def copy_obj(obj, dims, num_rows, num_cols, num_layers):
-    w, l, h = dims
-    copies = []
-    for layer in range(num_layers):
-        for row in range(num_rows):
-            for col in range(num_cols):
-                _copy = mesh.Mesh(obj.data.copy())
-                # pad the space between objects by 10% of the dimension being
-                # translated
-                if col != 0:
-                    translate(_copy, w, w / 10.0, col, 'x')
-                if row != 0:
-                    translate(_copy, l, l / 10.0, row, 'y')
-                if layer != 0:
-                    translate(_copy, h, h / 10.0, layer, 'z')
-                copies.append(_copy)
-    return copies
-
-def combine(m1, m2) -> mesh.Mesh:
-    minx, maxx, miny, maxy, minz, maxz = find_mins_maxs(m1)
-    w1, l1, h1 = (maxx - minx, maxy - miny, maxz - minz)
-    copies = copy_obj(m1, (w1, l1, h1), 2, 2, 1)
-
-    # I wanted to add another related STL to the final STL
-    minx, maxx, miny, maxy, minz, maxz = find_mins_maxs(m2)
-    w2, l2, h2 = (maxx - minx, maxy - miny, maxz - minz)
-    translate(m2, w1, w1 / 10., 3, 'x')
-    copies2 = copy_obj(m2, (w2, l2, h2), 2, 2, 1)
-    return mesh.Mesh(np.concatenate([m1.data, m2.data] +
-                                       [copy.data for copy in copies] +
-                                       [copy.data for copy in copies2]))
-###
-
+import setzpos from basic_shape_gen
+import generatecircumference from basic_shape_gen
 
 #Outer Upper vertex
 def ou(r, a, b, theta, rH) -> tuple:
@@ -201,15 +121,17 @@ def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
 
   return shape
 
-def display_stl():
+def display_stl_mplot():
   axes = mplot3d.Axes3D(pyplot.figure())
   axes.add_collection3d(mplot3d.art3d.Poly3DCollection(com.vectors))
 
   # Show the plot to the screen
   pyplot.show()
 
+
+
 # Main function
-def main(filename, pickling=False):
+def main(filename, stlname, pickling=False):
 
   # Read in array of bytes as float
   lst = [x for x in csv.reader(open(filename, 'rt', newline=''), delimiter=',')][0]
@@ -219,57 +141,32 @@ def main(filename, pickling=False):
   m = max(lst) * 60
   normalizedDepth = [truncate(x / m, precision) for x in lst]
 
-  if(pickling == True):
-      shapefile = open("pickle/{}_shape.p".format(rpm), 'rb')
-      recordShape = pickle.load(shapefile)
-      shapefile.close()
-      
-      print("Pre-engraving vertices: " + str(len(recordShape.get_vertices())))
-      print("Pre-engraving faces: " + str(len(recordShape.get_faces())))
+  shapefile = open("pickle/{}_shape.p".format(rpm), 'rb')
+  recordShape = pickle.load(shapefile)
+  shapefile.close()
+  
+  print("Pre-engraving vertices: " + str(len(recordShape.get_vertices())))
+  print("Pre-engraving faces: " + str(len(recordShape.get_faces())))
 
-      shape = draw_grooves(normalizedDepth, radius - 0.2, recordShape)
-      print("Done drawing grooves.\nTranslating grooves to mesh object.")
+  shape = draw_grooves(normalizedDepth, radius - 0.2, recordShape)
+  print("Done drawing grooves.\nTranslating grooves to mesh object.")
 
-      faces = shape.get_faces()
-      vertices = shape.get_vertices()
-      full_mesh = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
-      for i, f in enumerate(faces):
-          for j in range(3):
-              full_mesh.vectors[i][j] = vertices[f[j],:]
-      
-      print("Post-engraving vertices: " + str(len(vertices)))
-      print("Post-engraving faces: " + str(len(faces)))
+  faces = shape.get_faces()
+  vertices = shape.get_vertices()
+  full_mesh = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
+  for i, f in enumerate(faces):
+      for j in range(3):
+          full_mesh.vectors[i][j] = vertices[f[j],:]
+  
+  print("Post-engraving vertices: " + str(len(vertices)))
+  print("Post-engraving faces: " + str(len(faces)))
 
-      print("Save mesh.")
-      full_mesh.save("stl/" + "disc_test_grooves" + ".stl")
-  # Combing is currenttly broken
-  else:
-      #Import blank record
-      print("Import preprocessed blank " + str(rpm) + " disc.")
-      record_mesh = mesh.Mesh.from_file("stl/{}_disc.stl".format(rpm))
-      #Draw groove
-      shape = draw_grooves(normalizedDepth, radius - 0.2)
-      print("Done drawing grooves.\nTranslating grooves to mesh object.")
-
-      faces = shape.get_faces()
-      vertices = shape.get_vertices()
-      
-      print("Vertices: " + str(len(vertices)))
-      print("Faces: " + str(len(faces)))
-
-      groove_mesh = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
-      for i, f in enumerate(faces):
-          for j in range(3):
-              groove_mesh.vectors[i][j] = vertices[f[j],:]
-
-      print("Save groove mesh for debugging")
-      groove_mesh.save("stl/" + "grooves" + ".stl")
-      print("Combining record and groove mesh")
-      com = combine(record_mesh, groove_mesh)
-      com.save("stl/" + "disc_test_grooves" + ".stl")
+  print("Save mesh.")
+  full_mesh.save("stl/" + stlname + ".stl")
+  
   print("Done.")
 
 #Run program
 if __name__ == '__main__':
     print("\n"); print_constants(); print("\n")
-    main("audio/sample.csv", True)
+    main("audio/sample.csv", "sample_engraved")
