@@ -77,4 +77,4 @@ venv.bak/
 /stl
 /pickle
 /audio/*.csv
-
+*.stl
