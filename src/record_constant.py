@@ -13,14 +13,14 @@ tau = truncate(2 * math.pi, precision)
 samplingRate = 44100 # 44.1khz audio
 rpm = 45
 #Increasing spaces by increasing down sampling was 4
-downsampling = 6 #4
+downsampling = 8 #4
 thetaIter = truncate((60 * samplingRate) / (downsampling * rpm), precision)
 diameter = 7 # diameter of record in inches
 radius = truncate(diameter / 2, precision) # radius of record inches
 innerHole = 1.5 # For 33 1/3 rpm 0.286 # diameter of center hole in inches
 innerRad = truncate(0.7 * (47/20), precision) # radius of innermost groove in inches
-outerRad = truncate(3.2, precision)  # radius of outermost groove in inches
-recordHeight = rH = truncate(1/8, precision)
+outerRad = truncate(3.45, precision)  # radius of outermost groove in inches
+recordHeight = rH = truncate(1/4, precision)
 micronsPerInch = 25400
 micronsPerLayer = 16 # microns per vertical print layer
 amplitude = truncate((24 * micronsPerLayer) / micronsPerInch, precision) # 24 is the amplitude of signal (in 16 micron steps)
@@ -70,6 +70,10 @@ class _3DShape:
             return index
         else:
             return -1 #self.get_vertices().tolist().index(xyz)
+    
+    def add_vertices(self, lst):
+      for vertex in lst:
+          self.add_vertex(vertex)
 
     def add_face(self, point_a, point_b, point_c):
         points = [point_a, point_b, point_c]
@@ -88,9 +92,6 @@ class _3DShape:
 
         i = 0
         while i < min(len(a), len(b)) - 1:
-            if a > b:
-                self.add_face(a[i], a[i+1], b[i])
-            else:
-                self.add_face(b[i], b[i+1], a[i+1])
-            i += 1    
-
+            self.add_face(a[i], a[i+1], b[i])
+            self.add_face(b[i], b[i+1], a[i+1])
+            i += 1

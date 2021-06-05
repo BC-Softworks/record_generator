@@ -13,7 +13,8 @@ from matplotlib import pyplot
 import record_constant
 from record_constant import *
 
-from basic_shape_gen import setzpos 
+from basic_shape_gen import setzpos
+from basic_shape_gen import shape_to_mesh
 from basic_shape_gen import generatecircumference
 
 #Outer Upper vertex
@@ -38,13 +39,6 @@ def il(r, theta, gH) -> tuple:
 def grooveHeight(audio_array, samplenum):
   return truncate(recordHeight-depth-amplitude+audio_array[int(rateDivisor*samplenum)], precision);
 
-def groove_cap(r, a, b, theta, rH, gH, shape):
-  stop1 = [ou(r, a, b, theta, rH), iu(r, a, b, theta, rH)]
-  stop2 = [ol(r, theta, gH), il(r, theta, gH)]
-
-  #Draw triangles
-  shape.triStrip(stop1,stop2);
-
 # r is the radial postion of the vertex beign drawn
 def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
 
@@ -54,6 +48,12 @@ def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
   #Inner while for groove position
   lastEdge = None
   index = samplenum = 0
+  gH = grooveHeight(audio_array, samplenum)
+
+  s1 = [ou(radius, amplitude, bevel, 0, rH), iu(radius, amplitude, bevel, 0, rH)]
+  s2 = [ol(radius, 0, gH), il(radius, 0, gH)]
+  shape.add_vertices(s1 + s2)
+  shape.tristrip(s1, s2)
   while rateDivisor*samplenum < (len(audio_array)-rateDivisor*thetaIter+1):
       grooveOuterUpper = []
       grooveOuterLower = []
@@ -63,7 +63,8 @@ def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
       theta = 0
       while theta < tau:
           gH = grooveHeight(audio_array, samplenum)
-          grooveOuterUpper.append(ou(r, amplitude, bevel, theta, rH))
+          if index == 0:
+              grooveOuterUpper.append(ou(r, amplitude, bevel, theta, rH))
           grooveOuterLower.append(iu(r, amplitude, bevel, theta, rH))
           grooveInnerUpper.append(ol(r, theta, gH))
           grooveInnerLower.append(il(r, theta, gH))
@@ -75,20 +76,34 @@ def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
       outer = grooveOuterUpper + grooveOuterLower
       inner = grooveInnerUpper + grooveInnerLower
       lst = outer + inner
-
+      lastEdge = inner
+      
       for vertex in lst:
           #print(str(vertex) + " " + str(vertex in shape.get_vertices()))
           shape.add_vertex(vertex)
 
-      lastEdge = inner #grooveInnerUpper
+      
       #Connect verticies
-      shape.tristrip(lastEdge, grooveOuterUpper)
-      shape.tristrip(grooveOuterUpper, grooveOuterLower)
+      if index == 0:
+          #Draw triangle to close outer part of record
+          shape.tristrip(lastEdge, grooveOuterUpper)
+          shape.tristrip(grooveOuterUpper, grooveOuterLower)
+          
+          #Complete beginning cap if necessary
+          s1 = [ou(r, amplitude, bevel, theta, rH), iu(r, amplitude, bevel, theta, rH)]
+          for vertex in s1:
+              shape.add_vertex(vertex)
+          shape.tristrip(s1,s1);
+          
+      else:    
+          shape.tristrip(lastEdge, grooveOuterLower)
+      
       shape.tristrip(grooveOuterLower, grooveInnerLower)
       shape.tristrip(grooveInnerLower, grooveInnerUpper)
 
       index += 1
       print("Groove drawn: {} of {}".format(index, int(totalGrooveNum)))
+      
   # Draw groove cap
   theta = 0
   stop1 = [ou(r, amplitude, bevel, theta, rH), iu(r, amplitude, bevel, theta, rH)]
@@ -124,8 +139,6 @@ def display_stl_mplot():
   # Show the plot to the screen
   pyplot.show()
 
-
-
 # Main function
 def main(filename, stlname, pickling=False):
 
@@ -149,17 +162,11 @@ def main(filename, stlname, pickling=False):
 
   faces = shape.get_faces()
   vertices = shape.get_vertices()
-  full_mesh = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
-  for i, f in enumerate(faces):
-      for j in range(3):
-          full_mesh.vectors[i][j] = vertices[f[j],:]
+  full_mesh = shape_to_mesh(shape)
   
   print("Post-engraving vertices: " + str(len(vertices)))
   print("Post-engraving faces: " + str(len(faces)))
-
-  print("Save mesh.")
   full_mesh.save("stl/" + stlname + ".stl")
-  
   print("Done.")
 
 #Run program

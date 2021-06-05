@@ -19,10 +19,7 @@ def generatecircumference(t, r) -> list:
   lst = []
   while t < record_constant.tau:
     lst.append([radius + r * math.sin(t), radius + r * math.cos(t)])
-    # Increasing incrNum for circumference to speed up processing
-    # and shave off vertices unnecessary vertices
-    # Consider creating seperate constant in record_constant for this function
-    t += truncate(incrNum * 35, precision)
+    t += truncate(incrNum, precision)
 
   return lst
 
