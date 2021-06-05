@@ -115,15 +115,15 @@ def il(r, theta, gH) -> tuple:
 def grooveHeight(audio_array, samplenum):
   return truncate(recordHeight-depth-amplitude+audio_array[int(rateDivisor*samplenum)], 4);
 
-def groove_cap(r, a, b, theta, rH, gH, grooveShape):
+def groove_cap(r, a, b, theta, rH, gH, shape):
   stop1 = [ou(r, a, b, theta, rH), iu(r, a, b, theta, rH)]
   stop2 = [ol(r, theta, gH), il(r, theta, gH)]
 
   #Draw triangles
-  grooveShape.triStrip(stop1,stop2);
+  shape.triStrip(stop1,stop2);
 
 # r is the radial postion of the vertex beign drawn
-def draw_grooves(audio_array, r):
+def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
   #ti is thetaIter
   #Got rid of recusion because the BDFL said so
   #People wonder will I can't stand the dutch
@@ -153,20 +153,20 @@ def draw_grooves(audio_array, r):
           theta += incrNum
           samplenum += 1
 
-      grooveShape = record_constant._3DShape()
+      
       outer = grooveOuterUpper + grooveOuterLower
       inner = grooveInnerUpper + grooveInnerLower
       lst = outer + inner
 
       for vertex in lst:
-          grooveShape.add_vertex(vertex)
+          shape.add_vertex(vertex)
 
       lastEdge = grooveInnerUpper
       #Connect verticies
-      grooveShape.tristrip(lastEdge, grooveOuterUpper)
-      grooveShape.tristrip(grooveOuterUpper, grooveOuterLower)
-      grooveShape.tristrip(grooveOuterLower, grooveInnerLower)
-      grooveShape.tristrip(grooveInnerLower, grooveInnerUpper)
+      shape.tristrip(lastEdge, grooveOuterUpper)
+      shape.tristrip(grooveOuterUpper, grooveOuterLower)
+      shape.tristrip(grooveOuterLower, grooveInnerLower)
+      shape.tristrip(grooveInnerLower, grooveInnerUpper)
 
       print("Groove drawn: {} of {}".format((samplenum//14701)+1, int(totalGrooveNum)))
   # Draw groove cap
@@ -175,19 +175,19 @@ def draw_grooves(audio_array, r):
   stop2 = [ol(r, theta, gH), il(r, theta, gH)]
 
   #Draw triangles
-  #grooveShape.tristrip(stop1,stop2);
+  #shape.tristrip(stop1,stop2);
 
   #InnerUpper[0]
   #stop3 = [grooveInnerUpper.first()]
   #Innerhole[0]
   #stop3.append((r+innerHole/2*math.cos(theta), r+innerHole/2*math.sin(theta), rH))
 
-  #grooveShape.triStrip(stop1, stop3)
+  #shape.triStrip(stop1, stop3)
 
   #Close remaining space between last groove and center hole
-  #grooveShape.tristrip(lastEdge, setzpos(generatecircumference(0, innerHole / 2))[0])
+  #shape.tristrip(lastEdge, setzpos(generatecircumference(0, innerHole / 2))[0])
 
-  return grooveShape
+  return shape
 
 def display_stl():
   axes = mplot3d.Axes3D(pyplot.figure())
@@ -206,27 +206,36 @@ def main(filename, pickling=False):
   # Normalize the values
   m = max(lst) * 48
   normalizedDepth = [truncate(x / m, precision) for x in lst]
-  print("First list element normalized: {}".format(normalizedDepth[0]))
 
   if(pickling == True):
       shapefile = open("pickle/{}_shape.p".format(rpm), 'rb')
       recordShape = pickle.load(shapefile)
-      close(shapefile)
+      shapefile.close()
+     
+      assert type(recordShape) != "_3DShape"
 
-      if type(recordShape != "_3DShape"):
-          print("Bad pickle.")
-          quit(1)
+      shape = draw_grooves(normalizedDepth, radius - 0.2, recordShape)
+      print("Done drawing grooves.\nTranslating grooves to mesh object.")
+
+      faces = shape.get_faces()
+      vertices = shape.get_vertices()
+      full_mesh = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
+      for i, f in enumerate(faces):
+          for j in range(3):
+              full_mesh.vectors[i][j] = vertices[f[j],:]
+      print("Save mesh.")
+      full_mesh.save("stl/" + "disc_test_grooves" + ".stl")
 
   else:
       #Import blank record
       print("Import preprocessed blank " + str(rpm) + " disc.")
       record_mesh = mesh.Mesh.from_file("stl/{}_disc.stl".format(rpm))
       #Draw groove
-      grooveShape = draw_grooves(normalizedDepth, radius)
+      shape = draw_grooves(normalizedDepth, radius - 0.2)
       print("Done drawing grooves.\nTranslating grooves to mesh object.")
 
-      faces = grooveShape.get_faces()
-      vertices = grooveShape.get_vertices()
+      faces = shape.get_faces()
+      vertices = shape.get_vertices()
       groove_mesh = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
       for i, f in enumerate(faces):
           for j in range(3):
