@@ -55,7 +55,6 @@ def print_constants():
     print("radIncr: {}".format(radIncr))
     print("rateDivisor: {}".format(rateDivisor))
 
-
 class _3DShape:
     def __init__(self, dict={}):
         self.vertices = bidict(dict)
@@ -71,7 +70,7 @@ class _3DShape:
             self.vertices[index] = xyz
             return index
         else:
-            return -1 #self.get_vertices().tolist().index(xyz)
+            return -1 
     
     def add_vertices(self, lst):
       for vertex in lst:

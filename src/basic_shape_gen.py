@@ -61,7 +61,6 @@ def calculate_record_shape() -> mesh.Mesh:
   recordShape.tristrip(spacingLower, spacingUpper)
   recordShape.tristrip(centerHoleUpper, centerHoleLower)
 
-  
   return recordShape
 
 def shape_to_mesh(shape) -> mesh.Mesh:

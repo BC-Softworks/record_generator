@@ -72,15 +72,12 @@ def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
           theta += incrNum
           samplenum += 1
 
-      
       outer = grooveOuterUpper + grooveOuterLower
       inner = grooveInnerUpper + grooveInnerLower
-      lst = outer + inner
-      lastEdge = inner
-      
-      shape.add_vertices(lst)
+      shape.add_vertices(outer + inner)
 
-      
+      lastEdge = grooveOuterUpper if index == 0 else inner
+
       #Connect verticies
       if index == 0:
           #Draw triangle to close outer part of record
@@ -91,8 +88,7 @@ def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
           s1 = [ou(r, amplitude, bevel, theta, rH), iu(r, amplitude, bevel, theta, rH)]
           shape.add_vertices(s1)
           shape.tristrip(s1,s1);
-          
-      else:    
+      else:
           shape.tristrip(lastEdge, grooveOuterLower)
       
       shape.tristrip(grooveOuterLower, grooveInnerLower)
@@ -102,9 +98,8 @@ def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
       print("Groove drawn: {} of {}".format(index, int(totalGrooveNum)))
       
   # Draw groove cap
-  theta = 0
-  stop1 = [ou(r, amplitude, bevel, theta, rH), iu(r, amplitude, bevel, theta, rH)]
-  stop2 = [ol(r, theta, gH), il(r, theta, gH)]
+  stop1 = [ou(r, amplitude, bevel, 0, rH), iu(r, amplitude, bevel, 0, rH)]
+  stop2 = [ol(r, 0, gH), il(r, 0, gH)]
   cap = stop1 + stop2
   shape.add_vertices(cap)
 
@@ -112,14 +107,16 @@ def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
   shape.tristrip(stop1,stop2);
 
   #Fill in around cap
-  stop3 = [lastEdge[-1], (r+innerRad*math.cos(0), r+innerRad*math.sin(0), rH)]
+  stop3 = [lastEdge[-1], (r+innerRad, r, rH)]
   shape.add_vertex(stop3[1])
   shape.tristrip(stop1, stop3)
 
   #Close remaining space between last groove and center hole
   remainingSpace, _ = setzpos(generatecircumference(0, innerRad))
-  shape.add_vertices(remainingSpace)
-  shape.tristrip(lastEdge, remainingSpace)
+  edgeOfGroove, _ = setzpos(generatecircumference(0, r))
+  shape.add_vertices(remainingSpace + edgeOfGroove)
+
+  shape.tristrip(remainingSpace, edgeOfGroove)
 
   return shape
 
@@ -162,5 +159,4 @@ def main(filename, stlname, pickling=False):
 
 #Run program
 if __name__ == '__main__':
-    print("")
     main("audio/sample.csv", "sample_engraved")
