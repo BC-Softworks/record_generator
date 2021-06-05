@@ -21,7 +21,10 @@ def generatecircumference(t, r) -> list:
   lst = []
   while t < record_constant.tau:
     lst.append([radius + r * math.sin(t), radius + r * math.cos(t)])
-    t += incrNum
+    # Increasing incrNum for circumference to speed up processing
+    # and shave off vertices unnecessary vertices
+    # Consider creating seperate constant in record_constant for this function
+    t += truncate(incrNum * 35, precision)
 
   return lst
 
@@ -32,7 +35,7 @@ def setzpos(arr) -> tuple:
   for lst in arr:
       x = x + [(lst[0], lst[1], rH)]
       y = y + [(lst[0], lst[1], 0.0)]
-
+  
   assert len(x[0]) == 3
   return (x , y)
 
@@ -149,7 +152,7 @@ def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
           grooveOuterLower.append(iu(r, amplitude, bevel, theta, rH))
           grooveInnerUpper.append(ol(r, theta, gH))
           grooveInnerLower.append(il(r, theta, gH))
-          r = r - radIncr
+          r -= radIncr
           theta += incrNum
           samplenum += 1
 
@@ -159,6 +162,7 @@ def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
       lst = outer + inner
 
       for vertex in lst:
+          #print(str(vertex) + " " + str(vertex in shape.get_vertices()))
           shape.add_vertex(vertex)
 
       lastEdge = grooveInnerUpper
@@ -168,24 +172,31 @@ def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
       shape.tristrip(grooveOuterLower, grooveInnerLower)
       shape.tristrip(grooveInnerLower, grooveInnerUpper)
 
-      print("Groove drawn: {} of {}".format((samplenum//14701)+1, int(totalGrooveNum)))
+      print("Groove drawn: {} of {}".format((samplenum//14701), int(totalGrooveNum)))
   # Draw groove cap
   theta = 0
   stop1 = [ou(r, amplitude, bevel, theta, rH), iu(r, amplitude, bevel, theta, rH)]
   stop2 = [ol(r, theta, gH), il(r, theta, gH)]
+  cap = stop1 + stop2
+  
+  for i in range(0,4):
+    shape.add_vertex(cap[i])
 
   #Draw triangles
-  #shape.tristrip(stop1,stop2);
+  shape.tristrip(stop1,stop2);
 
-  #InnerUpper[0]
-  #stop3 = [grooveInnerUpper.first()]
-  #Innerhole[0]
-  #stop3.append((r+innerHole/2*math.cos(theta), r+innerHole/2*math.sin(theta), rH))
-
-  #shape.triStrip(stop1, stop3)
+  #Fill in around cap
+  stop3 = [grooveInnerUpper[0]]
+  stop3.append((r+innerHole/2*math.cos(theta), r+innerHole/2*math.sin(theta), rH))
+  shape.add_vertex(stop3[0])
+  shape.add_vertex(stop3[1])
+  shape.tristrip(stop1, stop3)
 
   #Close remaining space between last groove and center hole
-  #shape.tristrip(lastEdge, setzpos(generatecircumference(0, innerHole / 2))[0])
+  remainingSpace, _ = setzpos(generatecircumference(0, innerHole / 2))
+  for v in remainingSpace + lastEdge:
+    shape.add_vertex(v)
+  shape.tristrip(lastEdge, remainingSpace)
 
   return shape
 
@@ -204,15 +215,16 @@ def main(filename, pickling=False):
   lst = [float(x) for x in lst if x != '']
 
   # Normalize the values
-  m = max(lst) * 48
+  m = max(lst) * 60
   normalizedDepth = [truncate(x / m, precision) for x in lst]
 
   if(pickling == True):
       shapefile = open("pickle/{}_shape.p".format(rpm), 'rb')
       recordShape = pickle.load(shapefile)
       shapefile.close()
-     
-      assert type(recordShape) != "_3DShape"
+      
+      print("Pre-engraving vertices: " + str(len(recordShape.get_vertices())))
+      print("Pre-engraving faces: " + str(len(recordShape.get_faces())))
 
       shape = draw_grooves(normalizedDepth, radius - 0.2, recordShape)
       print("Done drawing grooves.\nTranslating grooves to mesh object.")
@@ -223,9 +235,13 @@ def main(filename, pickling=False):
       for i, f in enumerate(faces):
           for j in range(3):
               full_mesh.vectors[i][j] = vertices[f[j],:]
+      
+      print("Post-engraving vertices: " + str(len(vertices)))
+      print("Post-engraving faces: " + str(len(faces)))
+
       print("Save mesh.")
       full_mesh.save("stl/" + "disc_test_grooves" + ".stl")
-
+  # Combing is currenttly broken
   else:
       #Import blank record
       print("Import preprocessed blank " + str(rpm) + " disc.")
@@ -236,6 +252,10 @@ def main(filename, pickling=False):
 
       faces = shape.get_faces()
       vertices = shape.get_vertices()
+      
+      print("Vertices: " + str(len(vertices)))
+      print("Faces: " + str(len(faces)))
+
       groove_mesh = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
       for i, f in enumerate(faces):
           for j in range(3):

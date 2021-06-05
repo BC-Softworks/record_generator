@@ -22,7 +22,7 @@ def generatecircumference(t, r) -> list:
     # Increasing incrNum for circumference to speed up processing
     # and shave off vertices unnecessary vertices
     # Consider creating seperate constant in record_constant for this function
-    t += truncate(incrNum * 25.5, precision)
+    t += truncate(incrNum * 35, precision)
 
   return lst
 

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
 
 # Runs on Python 3.8 and above
 # Used for converting multi and single channel uncompressed
@@ -64,4 +64,6 @@ def main():
 
   wavetocsv(filename)
 
-main()
+#Run program
+if __name__ == '__main__':
+  main()

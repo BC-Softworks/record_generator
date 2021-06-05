@@ -13,7 +13,7 @@ tau = truncate(2 * math.pi, precision)
 samplingRate = 44100 # 44.1khz audio
 rpm = 45
 downsampling = 4
-thetaIter = (60 * samplingRate) / (downsampling * rpm)
+thetaIter = truncate((60 * samplingRate) / (downsampling * rpm),precision)
 diameter = 7 # diameter of record in inches
 radius = diameter / 2 # radius of record inches
 innerHole = 1 # For 33 1/3 rpm 0.286 # diameter of center hole in inches
@@ -24,9 +24,9 @@ micronsPerInch = 25400
 micronsPerLayer = 16 # microns per vertical print layer
 amplitude = truncate((24 * micronsPerLayer) / micronsPerInch, precision) # 24 is the amplitude of signal (in 16 micron steps)
 depth = truncate((6 * micronsPerLayer) / micronsPerInch, precision) # 6 is the measured in 16 microns steps, depth of tops of wave in groove from uppermost surface of record
-bevel = .5 # bevelled groove edge
+bevel = 0.5 # bevelled groove edge
 grooveWidth = truncate(1/300, precision) # in 600dpi pixels
-incrNum = tau / thetaIter # calculcate angular incrementation amount
+incrNum = truncate(tau / thetaIter, precision) # calculcate angular incrementation amount
 radIncr = truncate((grooveWidth + 2 * bevel * amplitude) / thetaIter, precision)  # calculate radial incrementation amount
 rateDivisor = 4.0 # Not sure what this should be yet
 
@@ -61,10 +61,14 @@ class _3DShape:
     def __str__(self):
         return self.vertices
 
-    def add_vertex(self, xyz):
+    def add_vertex(self, xyz) -> int:
+        assert len(xyz) == 3 #;print(xyz)
         index = len(self.vertices)
-        self.vertices[index] = xyz
-        return index
+        if xyz not in self.vertices.inverse: 
+            self.vertices[index] = xyz
+            return index
+        else:
+            return -1 #self.get_vertices().tolist().index(xyz)
 
     def add_face(self, point_a, point_b, point_c):
         points = [point_a, point_b, point_c]
@@ -81,7 +85,7 @@ class _3DShape:
         assert isinstance(a, list)
         assert isinstance(b, list)
 
-        for i in range(0, len(a) - 1):
+        for i in range(0, len(min([a, b])) - 1):
             self.add_face(a[i], a[i+1], b[i])
             self.add_face(b[i], b[i+1], a[i+1])
 
