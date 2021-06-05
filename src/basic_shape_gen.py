@@ -1,8 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 
 import stl
 from stl import mesh
 
+import pickle
 import numpy as np
 import math
 
@@ -18,7 +19,10 @@ def generatecircumference(t, r) -> list:
   lst = []
   while t < record_constant.tau:
     lst.append([radius + r * math.sin(t), radius + r * math.cos(t)])
-    t += incrNum
+    # Increasing incrNum for circumference to speed up processing
+    # and shave off vertices unnecessary vertices
+    # Consider creating seperate constant in record_constant for this function
+    t += truncate(incrNum * 25.5, precision)
 
   return lst
 
@@ -34,16 +38,18 @@ def setzpos(arr) -> tuple:
   return (x , y)
 
 # Combine the vectors in to an outer and inner circle
-def calculaterecordshape() -> mesh.Mesh:
+def calculate_record_shape() -> mesh.Mesh:
   recordShape = record_constant._3DShape()
   #Create vector lists
   (outerEdgeUpper, outerEdgeLower) = setzpos(generatecircumference(0, radius))
   (centerHoleUpper, centerHoleLower) = setzpos(generatecircumference(0, innerHole / 2))
   
+  print("Condense vertices into a single list")
   outer = outerEdgeUpper + outerEdgeLower
   center = centerHoleUpper + centerHoleLower
   lst = outer + center
 
+  print("Add vertices to shape")
   for vertex in lst:
       recordShape.add_vertex(vertex)
 
@@ -53,9 +59,11 @@ def calculaterecordshape() -> mesh.Mesh:
   recordShape.tristrip(centerHoleLower, outerEdgeLower)
   recordShape.tristrip(outerEdgeLower, outerEdgeUpper)
   
+  return recordShape
 
-  faces = recordShape.get_faces()
-  vertices = recordShape.get_vertices()
+def shape_to_mesh(shape) -> mesh.Mesh:
+  faces = shape.get_faces()
+  vertices = shape.get_vertices()
   rec = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
   for i, f in enumerate(faces):
     for j in range(3):
@@ -73,8 +81,17 @@ def display_stl(record_mesh):
 def main():
   filename = str(rpm) + '_disc.stl'
   print('Generating blank record.')
-  record_mesh = calculaterecordshape()
+  recordShape = calculate_record_shape()
+
+  #Create pickle of recordShape
+  print("Pickling record shape.")
+  f = open("pickle/{}_shape.p".format(rpm), 'wb')
+  pickle.dump(recordShape, f, pickle.HIGHEST_PROTOCOL)
+
+  # Save mesh for debugging purposes
+  record_mesh = shape_to_mesh(recordShape)
   print("Saving file to {}".format(filename))
   record_mesh.save("../stl/" + filename)
 
-main()
+if __name__ == '__main__':
+  main()

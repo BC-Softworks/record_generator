@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import pickle
 import numpy as np
 import math
 import csv
@@ -12,7 +13,7 @@ from matplotlib import pyplot
 import record_constant
 from record_constant import *
 
-# From basic_shape_gen
+## From basic_shape_gen
 
 # Generate circumference of record
 # Recursive call comes first to to order of evaluation
@@ -35,7 +36,7 @@ def setzpos(arr) -> tuple:
   assert len(x[0]) == 3
   return (x , y)
 
-
+##
 ## From https://pypi.org/project/numpy-stl/
 # Slightly optimized
 # find the max dimensions, so we can know the bounding box, getting the height,
@@ -55,7 +56,7 @@ def translate(_solid, step, padding, multiplier, axis):
         raise RuntimeError('Unknown axis %r, expected x, y or z' % axis)
 
     # _solid.points.shape == [:, ((x, y, z), (x, y, z), (x, y, z))]
-    _solid.points[:, items] += multiplier * (step + padding)
+    _solid.points[:, items] += (multiplier * step) + (multiplier * padding)
 
 
 def copy_obj(obj, dims, num_rows, num_cols, num_layers):
@@ -115,8 +116,8 @@ def grooveHeight(audio_array, samplenum):
   return truncate(recordHeight-depth-amplitude+audio_array[int(rateDivisor*samplenum)], 4);
 
 def groove_cap(r, a, b, theta, rH, gH, grooveShape):
-  stop1 = list(ou(r, a, b, theta, rH), iu(r, a, b, theta, rH))
-  stop2 = list(ol(r, theta, gH), il(r, theta, gH))
+  stop1 = [ou(r, a, b, theta, rH), iu(r, a, b, theta, rH)]
+  stop2 = [ol(r, theta, gH), il(r, theta, gH)]
 
   #Draw triangles
   grooveShape.triStrip(stop1,stop2);
@@ -167,12 +168,12 @@ def draw_grooves(audio_array, r):
       grooveShape.tristrip(grooveOuterLower, grooveInnerLower)
       grooveShape.tristrip(grooveInnerLower, grooveInnerUpper)
 
-      print("Groove drawn: {} of {}".format(samplenum//14701, int(totalGrooveNum)))
+      print("Groove drawn: {} of {}".format((samplenum//14701)+1, int(totalGrooveNum)))
   # Draw groove cap
-  #theta = 0
-  #stop1 = [ou(r, amplitude, bevel, theta, rH), iu(r, amplitude, bevel, theta, rH)]
-  #stop2 = [ol(r, theta, gH), il(r, theta, gH)]
-  #
+  theta = 0
+  stop1 = [ou(r, amplitude, bevel, theta, rH), iu(r, amplitude, bevel, theta, rH)]
+  stop2 = [ol(r, theta, gH), il(r, theta, gH)]
+
   #Draw triangles
   #grooveShape.tristrip(stop1,stop2);
 
@@ -196,45 +197,48 @@ def display_stl():
   pyplot.show()
 
 # Main function
-def main(filename):
+def main(filename, pickling=False):
 
   # Read in array of bytes as float
   lst = [x for x in csv.reader(open(filename, 'rt', newline=''), delimiter=',')][0]
   lst = [float(x) for x in lst if x != '']
-  #print("First list element: {}".format(lst[0]))
 
   # Normalize the values
-  m = max(lst) * 4
+  m = max(lst) * 48
   normalizedDepth = [truncate(x / m, precision) for x in lst]
   print("First list element normalized: {}".format(normalizedDepth[0]))
 
-  #Import blank record
-  print("Import preprocessed blank " + str(rpm) + " disc.")
-  record_mesh = mesh.Mesh.from_file("stl/{}_disc.stl".format(rpm))
-  #Draw groove
-  grooveShape = draw_grooves(normalizedDepth, radius)
-  print("Done drawing grooves.")
+  if(pickling == True):
+      shapefile = open("pickle/{}_shape.p".format(rpm), 'rb')
+      recordShape = pickle.load(shapefile)
+      close(shapefile)
 
-  print("Translating grooves to mesh object.")
+      if type(recordShape != "_3DShape"):
+          print("Bad pickle.")
+          quit(1)
 
-  faces = grooveShape.get_faces()
-  vertices = grooveShape.get_vertices()
-  groove_mesh = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
-  for i, f in enumerate(faces):
-    for j in range(3):
-      groove_mesh.vectors[i][j] = vertices[f[j],:]
+  else:
+      #Import blank record
+      print("Import preprocessed blank " + str(rpm) + " disc.")
+      record_mesh = mesh.Mesh.from_file("stl/{}_disc.stl".format(rpm))
+      #Draw groove
+      grooveShape = draw_grooves(normalizedDepth, radius)
+      print("Done drawing grooves.\nTranslating grooves to mesh object.")
 
+      faces = grooveShape.get_faces()
+      vertices = grooveShape.get_vertices()
+      groove_mesh = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
+      for i, f in enumerate(faces):
+          for j in range(3):
+              groove_mesh.vectors[i][j] = vertices[f[j],:]
 
-  print("Save groove mesh for debugging")
-  groove_mesh.save("stl/" + "grooves" + ".stl")
-
-  # Create a new plot
-  # Load the STL files and add the vectors to the plot
-  # Auto scale to the mesh size
-  print("Combining record and groove mesh")
-  com = combine(record_mesh, groove_mesh)
-  com.save("stl/" + "disc_test_grooves" + ".stl")
+      print("Save groove mesh for debugging")
+      groove_mesh.save("stl/" + "grooves" + ".stl")
+      print("Combining record and groove mesh")
+      com = combine(record_mesh, groove_mesh)
+      com.save("stl/" + "disc_test_grooves" + ".stl")
   print("Done.")
 
 #Run program
-main("audio/sine.csv")
+if __name__ == '__main__':
+    main("audio/sine.csv", True)

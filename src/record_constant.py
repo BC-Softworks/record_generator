@@ -19,12 +19,12 @@ radius = diameter / 2 # radius of record inches
 innerHole = 1 # For 33 1/3 rpm 0.286 # diameter of center hole in inches
 innerRad = truncate(47/20, precision) # radius of innermost groove in inches
 outerRad = truncate(23/4, precision)  # radius of outermost groove in inches
-recordHeight = rH = truncate(1/16, precision)
+recordHeight = rH = truncate(1/8, precision)
 micronsPerInch = 25400
 micronsPerLayer = 16 # microns per vertical print layer
 amplitude = truncate((24 * micronsPerLayer) / micronsPerInch, precision) # 24 is the amplitude of signal (in 16 micron steps)
 depth = truncate((6 * micronsPerLayer) / micronsPerInch, precision) # 6 is the measured in 16 microns steps, depth of tops of wave in groove from uppermost surface of record
-bevel = 0.5 # bevelled groove edge
+bevel = .5 # bevelled groove edge
 grooveWidth = truncate(1/300, precision) # in 600dpi pixels
 incrNum = tau / thetaIter # calculcate angular incrementation amount
 radIncr = truncate((grooveWidth + 2 * bevel * amplitude) / thetaIter, precision)  # calculate radial incrementation amount
