@@ -13,8 +13,8 @@ from matplotlib import pyplot
 import record_constant
 from record_constant import *
 
-import setzpos from basic_shape_gen
-import generatecircumference from basic_shape_gen
+from basic_shape_gen import setzpos 
+from basic_shape_gen import generatecircumference
 
 #Outer Upper vertex
 def ou(r, a, b, theta, rH) -> tuple:
@@ -36,7 +36,7 @@ def il(r, theta, gH) -> tuple:
   return (r + w * math.cos(theta), r + w * math.sin(theta), gH)
 
 def grooveHeight(audio_array, samplenum):
-  return truncate(recordHeight-depth-amplitude+audio_array[int(rateDivisor*samplenum)], 4);
+  return truncate(recordHeight-depth-amplitude+audio_array[int(rateDivisor*samplenum)], precision);
 
 def groove_cap(r, a, b, theta, rH, gH, shape):
   stop1 = [ou(r, a, b, theta, rH), iu(r, a, b, theta, rH)]
@@ -47,11 +47,6 @@ def groove_cap(r, a, b, theta, rH, gH, shape):
 
 # r is the radial postion of the vertex beign drawn
 def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
-  #ti is thetaIter
-  #Got rid of recusion because the BDFL said so
-  #People wonder will I can't stand the dutch
-  #Lowercase ducth because I don't have the respect to capitalize the proper noun
-
 
   # Print number of grooves to draw
   totalGrooveNum = len(audio_array) // (rateDivisor * thetaIter)
@@ -85,7 +80,7 @@ def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
           #print(str(vertex) + " " + str(vertex in shape.get_vertices()))
           shape.add_vertex(vertex)
 
-      lastEdge = grooveInnerUpper
+      lastEdge = inner #grooveInnerUpper
       #Connect verticies
       shape.tristrip(lastEdge, grooveOuterUpper)
       shape.tristrip(grooveOuterUpper, grooveOuterLower)
@@ -107,16 +102,17 @@ def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
   shape.tristrip(stop1,stop2);
 
   #Fill in around cap
-  stop3 = [grooveInnerUpper[0]]
+  stop3 = [lastEdge[-1]]
   stop3.append((r+innerHole/2*math.cos(theta), r+innerHole/2*math.sin(theta), rH))
-  shape.add_vertex(stop3[0])
   shape.add_vertex(stop3[1])
   shape.tristrip(stop1, stop3)
 
   #Close remaining space between last groove and center hole
   remainingSpace, _ = setzpos(generatecircumference(0, innerHole / 2))
-  for v in remainingSpace + lastEdge:
+  for v in remainingSpace:
     shape.add_vertex(v)
+  
+  
   shape.tristrip(lastEdge, remainingSpace)
 
   return shape
@@ -148,7 +144,7 @@ def main(filename, stlname, pickling=False):
   print("Pre-engraving vertices: " + str(len(recordShape.get_vertices())))
   print("Pre-engraving faces: " + str(len(recordShape.get_faces())))
 
-  shape = draw_grooves(normalizedDepth, radius - 0.2, recordShape)
+  shape = draw_grooves(normalizedDepth, outerRad, recordShape)
   print("Done drawing grooves.\nTranslating grooves to mesh object.")
 
   faces = shape.get_faces()

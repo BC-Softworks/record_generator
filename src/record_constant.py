@@ -12,14 +12,14 @@ precision = 5
 tau = truncate(2 * math.pi, precision)
 samplingRate = 44100 # 44.1khz audio
 rpm = 45
-downsampling = 6 #4
 #Increasing spaces by increasing down sampling was 4
+downsampling = 6 #4
 thetaIter = truncate((60 * samplingRate) / (downsampling * rpm), precision)
 diameter = 7 # diameter of record in inches
 radius = truncate(diameter / 2, precision) # radius of record inches
-innerHole = 1.25 # For 33 1/3 rpm 0.286 # diameter of center hole in inches
-innerRad = truncate(47/20, precision) # radius of innermost groove in inches
-outerRad = truncate(23/4, precision)  # radius of outermost groove in inches
+innerHole = 1.5 # For 33 1/3 rpm 0.286 # diameter of center hole in inches
+innerRad = truncate(0.7 * (47/20), precision) # radius of innermost groove in inches
+outerRad = truncate(0.7 * 4.8, precision)  # radius of outermost groove in inches
 recordHeight = rH = truncate(1/8, precision)
 micronsPerInch = 25400
 micronsPerLayer = 16 # microns per vertical print layer
@@ -60,7 +60,7 @@ class _3DShape:
         self.faces = []
 
     def __str__(self):
-        return self.vertices
+        return str(self.vertices)
 
     def add_vertex(self, xyz) -> int:
         assert len(xyz) == 3 #;print(xyz)
@@ -83,10 +83,14 @@ class _3DShape:
         return np.array(self.faces)
 
     def tristrip(self, a, b):
-        assert isinstance(a, list)
-        assert isinstance(b, list)
+        assert isinstance(a, list) and len(a) > 0
+        assert isinstance(b, list) and len(b) > 0
 
-        for i in range(0, len(min([a, b])) - 1):
-            self.add_face(a[i], a[i+1], b[i])
-            self.add_face(b[i], b[i+1], a[i+1])
+        i = 0
+        while i < min(len(a), len(b)) - 1:
+            if a > b:
+                self.add_face(a[i], a[i+1], b[i])
+            else:
+                self.add_face(b[i], b[i+1], a[i+1])
+            i += 1    
 
