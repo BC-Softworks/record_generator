@@ -3,25 +3,31 @@ from bidict import bidict
 import numpy as np
 import math
 
-tau = 2 * math.pi
+
+def truncate(n, decimals=0):
+    multiplier = 10 ** decimals
+    return int(n * multiplier) / multiplier
+
+precision = 5
+tau = truncate(2 * math.pi, precision)
 samplingRate = 44100 # 44.1khz audio
 rpm = 45
 downsampling = 4
 thetaIter = (60 * samplingRate) / (downsampling * rpm)
 diameter = 7 # diameter of record in inches
 radius = diameter / 2 # radius of record inches
-innerHole = 143/500 # diameter of center hole in inches
-innerRad = 47/20 # radius of innermost groove in inches
-outerRad = 23/4 # radius of outermost groove in inches
-recordHeight = rH = 1/25
+innerHole = 1 # For 33 1/3 rpm 0.286 # diameter of center hole in inches
+innerRad = truncate(47/20, precision) # radius of innermost groove in inches
+outerRad = truncate(23/4, precision)  # radius of outermost groove in inches
+recordHeight = rH = truncate(1/16, precision)
 micronsPerInch = 25400
 micronsPerLayer = 16 # microns per vertical print layer
-amplitude = (24 * micronsPerLayer) / micronsPerInch # 24 is the amplitude of signal (in 16 micron steps)
-depth = (6 * micronsPerLayer) / micronsPerInch # 6 is the measured in 16 microns steps, depth of tops of wave in groove from uppermost surface of record
+amplitude = truncate((24 * micronsPerLayer) / micronsPerInch, precision) # 24 is the amplitude of signal (in 16 micron steps)
+depth = truncate((6 * micronsPerLayer) / micronsPerInch, precision) # 6 is the measured in 16 microns steps, depth of tops of wave in groove from uppermost surface of record
 bevel = 0.5 # bevelled groove edge
-grooveWidth = 1/300 # in 600dpi pixels
+grooveWidth = truncate(1/300, precision) # in 600dpi pixels
 incrNum = tau / thetaIter # calculcate angular incrementation amount
-radIncr = (grooveWidth + 2 * bevel * amplitude) / thetaIter  # calculate radial incrementation amount
+radIncr = truncate((grooveWidth + 2 * bevel * amplitude) / thetaIter, precision)  # calculate radial incrementation amount
 rateDivisor = 4.0 # Not sure what this should be yet
 
 def print_constants():
@@ -35,16 +41,17 @@ def print_constants():
     print("innerHole: {}".format(innerHole))
     print("innerRad: {}".format(innerRad))
     print("outerRad: {}".format(outerRad))
-    print("recordHeight {}".format(recordHeight))
-    print("micronsPerInch {}".format(micronsPerInch))
-    print("micronsPerLayer {}".format(micronsPerLayer))
-    print("amplitude {}".format(amplitude))
-    print("depth {}".format(depth))
-    print("bevel {}".format(bevel))
-    print("grooveWidth {}".format(grooveWidth))
-    print("incrNum {}".format(incrNum))
-    print("radIncr {}".format(radIncr))
+    print("recordHeight: {}".format(recordHeight))
+    print("micronsPerInch: {}".format(micronsPerInch))
+    print("micronsPerLayer: {}".format(micronsPerLayer))
+    print("amplitude: {}".format(amplitude))
+    print("depth: {}".format(depth))
+    print("bevel: {}".format(bevel))
+    print("grooveWidth: {}".format(grooveWidth))
+    print("incrNum: {}".format(incrNum))
+    print("radIncr: {}".format(radIncr))
     print("rateDivisor: {}".format(rateDivisor))
+
 
 class _3DShape:
     def __init__(self, dict={}):
@@ -60,13 +67,21 @@ class _3DShape:
         return index
 
     def add_face(self, point_a, point_b, point_c):
-        points = [self.point_a, self.point_b, self.point_c]
-        self.faces.append([vertices.inverse[x] for x in points])
+        points = [point_a, point_b, point_c]
+        self.faces.append([self.vertices.inverse[x] for x in points])
     
     def get_vertices(self):
-        lst = [self.vertices[i] for i in range(0, len(self.vertices))]
+        lst = [self.vertices[i] for i in range(0, len(self.vertices) )]
         return np.array(lst)
     
     def get_faces(self):
         return np.array(self.faces)
+
+    def tristrip(self, a, b):
+        assert isinstance(a, list)
+        assert isinstance(b, list)
+
+        for i in range(0, len(a) - 1):
+            self.add_face(a[i], a[i+1], b[i])
+            self.add_face(b[i], b[i+1], a[i+1])
 

@@ -1,13 +1,40 @@
-from cmath import tau
+#!/usr/bin/env python3
+
 import numpy as np
 import math
+import csv
 
 import stl
 from stl import mesh
 from mpl_toolkits import mplot3d
 from matplotlib import pyplot
 
+import record_constant
 from record_constant import *
+
+# From basic_shape_gen
+
+# Generate circumference of record
+# Recursive call comes first to to order of evaluation
+def generatecircumference(t, r) -> list:
+  lst = []
+  while t < record_constant.tau:
+    lst.append([radius + r * math.sin(t), radius + r * math.cos(t)])
+    t += incrNum
+
+  return lst
+
+#Add z position to each vector of x and y
+def setzpos(arr) -> tuple:
+  x = list()
+  y = list()
+  for lst in arr:
+      x = x + [(lst[0], lst[1], rH)]
+      y = y + [(lst[0], lst[1], 0.0)]
+
+  assert len(x[0]) == 3
+  return (x , y)
+
 
 ## From https://pypi.org/project/numpy-stl/
 # Slightly optimized
@@ -48,113 +75,166 @@ def copy_obj(obj, dims, num_rows, num_cols, num_layers):
                     translate(_copy, h, h / 10.0, layer, 'z')
                 copies.append(_copy)
     return copies
+
+def combine(m1, m2) -> mesh.Mesh:
+    minx, maxx, miny, maxy, minz, maxz = find_mins_maxs(m1)
+    w1, l1, h1 = (maxx - minx, maxy - miny, maxz - minz)
+    copies = copy_obj(m1, (w1, l1, h1), 2, 2, 1)
+
+    # I wanted to add another related STL to the final STL
+    minx, maxx, miny, maxy, minz, maxz = find_mins_maxs(m2)
+    w2, l2, h2 = (maxx - minx, maxy - miny, maxz - minz)
+    translate(m2, w1, w1 / 10., 3, 'x')
+    copies2 = copy_obj(m2, (w2, l2, h2), 2, 2, 1)
+    return mesh.Mesh(np.concatenate([m1.data, m2.data] +
+                                       [copy.data for copy in copies] +
+                                       [copy.data for copy in copies2]))
 ###
 
+
 #Outer Upper vertex
-def ou(r, a, b, theta, rH):
+def ou(r, a, b, theta, rH) -> tuple:
   w = r + a * b
-  return np.array([r + w * cos(theta), r + w * sin(theta), rH])
+  return (r + w * math.cos(theta), r + w * math.sin(theta), rH)
 
 #Inner Upper vertex
-def iu(r, a, b, theta, rH):
-  w = r - gW - a * b
-  return np.array([r + w * cos(theta), r + w * sin(theta), rH])
+def iu(r, a, b, theta, rH) -> tuple:
+  w = r - grooveWidth - a * b
+  return (r + w * math.cos(theta), r + w * math.sin(theta), rH)
 
 #Outer Lower vertex
-def ol(r, a, theta, gH):
-  return np.array([r + r * cos(theta), r + r * sin(theta), gH])
+def ol(r, theta, gH) -> tuple:
+  return (r + r * math.cos(theta), r + r * math.sin(theta), gH)
 
 #Inner Lower vertex
-def il(r, a, theta, gH):
-  w = r - gW
-  return np.array([r + w * cos(theta), r + w * sin(theta), gH])
+def il(r, theta, gH) -> tuple:
+  w = r - grooveWidth
+  return (r + w * math.cos(theta), r + w * math.sin(theta), gH)
 
-def grooveHeight(audio_array):
-  return recordHeight-depth-amplitude+audio_array[rateDivisor*samplenum];
+def grooveHeight(audio_array, samplenum):
+  return truncate(recordHeight-depth-amplitude+audio_array[int(rateDivisor*samplenum)], 4);
 
-def groove_cap(r, a, b, theta, rH, gH):
-  stop1 = np.array([ou(r, a, b, theta, rH), iu(r, a, b, theta, rH)])
-  stop2 = np.array([ol(r, a, b, theta, gH), il(r, a, theta, gH)])
-  
+def groove_cap(r, a, b, theta, rH, gH, grooveShape):
+  stop1 = list(ou(r, a, b, theta, rH), iu(r, a, b, theta, rH))
+  stop2 = list(ol(r, theta, gH), il(r, theta, gH))
+
   #Draw triangles
-  geo.quadStrip(stop1,stop2);
+  grooveShape.triStrip(stop1,stop2);
 
 # r is the radial postion of the vertex beign drawn
 def draw_grooves(audio_array, r):
   #ti is thetaIter
-  baseCase = lambda ti : rateDivisor*samplenum < (lens(audio_array)-rateDivisor*ti+1)
-               and r > innerRad
-  
-  if baseCase(thetaIter):
-    grooveOuterUpper = []
-    grooveOuterLower = []
-    grooveInnerUpper = []
-    grooveInnerLower = []
-    for theta in range(0, incrNum, tau):
-      samplenum += 1
-      gH = grooveHeight(audio_array)      
-      grooveOuterUpper.append(ou(r, a, b, theta, rH))
-      grooveOuterLower.append(iu(r, a, b, theta, rH))
-      grooveInnerUpper.append(ol(r, a, theta, gH))
-      grooveInnerLower.append(il(r, a, theta, gH))
-      r -= radIncr
+  #Got rid of recusion because the BDFL said so
+  #People wonder will I can't stand the dutch
+  #Lowercase ducth because I don't have the respect to capitalize the proper noun
 
-    #Connect verticies
-    geo.quadStrip(lastEdge, grooveOuterUpper)
-    geo.quadStrip(grooveOuterUpper, grooveOuterLower)
-    geo.quadStrip(grooveOuterLower, grooveInnerLower)
-    geo.quadStrip(grooveInnerLower, grooveInnerUpper)
-    
 
-    draw_grooves(audio_array, r)
-  
+  # Print number of grooves to draw
+  totalGrooveNum = len(audio_array) // (rateDivisor * thetaIter)
+
+  #Inner while for groove position
+  lastEdge = None
+  samplenum = 0
+  while rateDivisor*samplenum < (len(audio_array)-rateDivisor*thetaIter+1):
+      grooveOuterUpper = []
+      grooveOuterLower = []
+      grooveInnerUpper = []
+      grooveInnerLower = []
+
+      theta = 0
+      while theta < tau:
+          gH = grooveHeight(audio_array, samplenum)
+          grooveOuterUpper.append(ou(r, amplitude, bevel, theta, rH))
+          grooveOuterLower.append(iu(r, amplitude, bevel, theta, rH))
+          grooveInnerUpper.append(ol(r, theta, gH))
+          grooveInnerLower.append(il(r, theta, gH))
+          r = r - radIncr
+          theta += incrNum
+          samplenum += 1
+
+      grooveShape = record_constant._3DShape()
+      outer = grooveOuterUpper + grooveOuterLower
+      inner = grooveInnerUpper + grooveInnerLower
+      lst = outer + inner
+
+      for vertex in lst:
+          grooveShape.add_vertex(vertex)
+
+      lastEdge = grooveInnerUpper
+      #Connect verticies
+      grooveShape.tristrip(lastEdge, grooveOuterUpper)
+      grooveShape.tristrip(grooveOuterUpper, grooveOuterLower)
+      grooveShape.tristrip(grooveOuterLower, grooveInnerLower)
+      grooveShape.tristrip(grooveInnerLower, grooveInnerUpper)
+
+      print("Groove drawn: {} of {}".format(samplenum//14701, int(totalGrooveNum)))
   # Draw groove cap
-  else:
- 
-    stop1 = np.array([ou(r, a, b, theta, rH), iu(r, a, b, theta, rH)])
-    stop2 = np.array([ol(r, a, b, theta, gH), il(r, a, theta, gH)])
+  #theta = 0
+  #stop1 = [ou(r, amplitude, bevel, theta, rH), iu(r, amplitude, bevel, theta, rH)]
+  #stop2 = [ol(r, theta, gH), il(r, theta, gH)]
+  #
+  #Draw triangles
+  #grooveShape.tristrip(stop1,stop2);
 
-    #Draw triangles
-    geo.quadStrip(stop1,stop2);
- 
-    #InnerUpper[0]
-    stop3 = [grooveInnerUpper.first()]
-    #Innerhole[0]
-    stop3.append(radius+innerHole/2*cos(theta),radius+innerHole/2*sin(theta),recordHeight)
-    
-    #Draw triangles
-    geo.quadStrip(stop1,stop3)
+  #InnerUpper[0]
+  #stop3 = [grooveInnerUpper.first()]
+  #Innerhole[0]
+  #stop3.append((r+innerHole/2*math.cos(theta), r+innerHole/2*math.sin(theta), rH))
 
-    #Close remaining space between last groove and center hole  
-    geo.quadStrip(lastEdge,recordHoleUpper)
+  #grooveShape.triStrip(stop1, stop3)
 
-# Main function  
-def main(filename):
-  
-  # Read in array of bytes as floats
-  arr = np.asarray(open(filename, 'rt', newline='').read().partition(','), dtype='numpy.single')
-  # Normalize the values
-  arr = np.divide(arr, np.amax(arr))
-  totalGrooveNum = lens(normalizedDepth) // (rateDivisor * thetaIter)
+  #Close remaining space between last groove and center hole
+  #grooveShape.tristrip(lastEdge, setzpos(generatecircumference(0, innerHole / 2))[0])
 
-  #Import blank record
-  record_mesh = mesh.Mesh.from_file(rpm + 'BlankLP.stl')
+  return grooveShape
 
-  print("Grooves to draw {}.".format(totalGrooveNum))
-  mesh = draw_grooves(normalizedDepth)
-  print("Done.")
-
-  # Create a new plot
-  # Load the STL files and add the vectors to the plot
-  # Auto scale to the mesh size
-  
+def display_stl():
   axes = mplot3d.Axes3D(pyplot.figure())
-  axes.add_collection3d(mplot3d.art3d.Poly3DCollection(mesh.vectors))
-  scale = your_mesh.points.flatten()
-  axes.auto_scale_xyz(scale, scale, scale)
+  axes.add_collection3d(mplot3d.art3d.Poly3DCollection(com.vectors))
 
   # Show the plot to the screen
   pyplot.show()
 
-#Run program  
-main("Jazz-Example.csv")
+# Main function
+def main(filename):
+
+  # Read in array of bytes as float
+  lst = [x for x in csv.reader(open(filename, 'rt', newline=''), delimiter=',')][0]
+  lst = [float(x) for x in lst if x != '']
+  #print("First list element: {}".format(lst[0]))
+
+  # Normalize the values
+  m = max(lst) * 4
+  normalizedDepth = [truncate(x / m, precision) for x in lst]
+  print("First list element normalized: {}".format(normalizedDepth[0]))
+
+  #Import blank record
+  print("Import preprocessed blank " + str(rpm) + " disc.")
+  record_mesh = mesh.Mesh.from_file("stl/{}_disc.stl".format(rpm))
+  #Draw groove
+  grooveShape = draw_grooves(normalizedDepth, radius)
+  print("Done drawing grooves.")
+
+  print("Translating grooves to mesh object.")
+
+  faces = grooveShape.get_faces()
+  vertices = grooveShape.get_vertices()
+  groove_mesh = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
+  for i, f in enumerate(faces):
+    for j in range(3):
+      groove_mesh.vectors[i][j] = vertices[f[j],:]
+
+
+  print("Save groove mesh for debugging")
+  groove_mesh.save("stl/" + "grooves" + ".stl")
+
+  # Create a new plot
+  # Load the STL files and add the vectors to the plot
+  # Auto scale to the mesh size
+  print("Combining record and groove mesh")
+  com = combine(record_mesh, groove_mesh)
+  com.save("stl/" + "disc_test_grooves" + ".stl")
+  print("Done.")
+
+#Run program
+main("audio/sine.csv")
