@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import pickle
 import numpy as np
@@ -138,7 +138,7 @@ def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
 
   #Inner while for groove position
   lastEdge = None
-  samplenum = 0
+  index = samplenum = 0
   while rateDivisor*samplenum < (len(audio_array)-rateDivisor*thetaIter+1):
       grooveOuterUpper = []
       grooveOuterLower = []
@@ -172,7 +172,8 @@ def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
       shape.tristrip(grooveOuterLower, grooveInnerLower)
       shape.tristrip(grooveInnerLower, grooveInnerUpper)
 
-      print("Groove drawn: {} of {}".format((samplenum//14701), int(totalGrooveNum)))
+      index += 1
+      print("Groove drawn: {} of {}".format(index, int(totalGrooveNum)))
   # Draw groove cap
   theta = 0
   stop1 = [ou(r, amplitude, bevel, theta, rH), iu(r, amplitude, bevel, theta, rH)]
@@ -270,4 +271,5 @@ def main(filename, pickling=False):
 
 #Run program
 if __name__ == '__main__':
-    main("audio/sine.csv", True)
+    print("\n"); print_constants(); print("\n")
+    main("audio/sample.csv", True)
