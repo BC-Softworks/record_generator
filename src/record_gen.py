@@ -145,6 +145,9 @@ def main(filename, stlname, pickling=False):
   print("Pre-engraving vertices: " + str(len(recordShape.get_vertices())))
   print("Pre-engraving faces: " + str(len(recordShape.get_faces())))
 
+  ## For debugging
+  shape_to_mesh(draw_grooves(normalizedDepth, outerRad, recordShape)).save("grooves.stl")
+
   shape = draw_grooves(normalizedDepth, outerRad, recordShape)
   print("Done drawing grooves.\nTranslating grooves to mesh object.")
 
