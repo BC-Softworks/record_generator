@@ -12,15 +12,14 @@ precision = 5
 tau = truncate(2 * math.pi, precision)
 samplingRate = 44100 # 44.1khz audio
 rpm = 45
-#Increasing spaces by increasing down sampling was 4
-downsampling = 8 #4
+downsampling = 4
 thetaIter = truncate((60 * samplingRate) / (downsampling * rpm), precision)
 diameter = 7 # diameter of record in inches
 radius = truncate(diameter / 2, precision) # radius of record inches
 innerHole = 1.5 # For 33 1/3 rpm 0.286 # diameter of center hole in inches
 innerRad = truncate(0.80, precision) # radius of innermost groove in inches
-outerRad = truncate(3.48, precision)  # radius of outermost groove in inches
-recordHeight = rH = truncate(1/4, precision)
+outerRad = truncate(3.485, precision)  # radius of outermost groove in inches
+recordHeight = rH = truncate(3/16, precision)
 micronsPerInch = 25400
 micronsPerLayer = 16 # microns per vertical print layer
 # 24 is the amplitude of signal (in 16 micron steps)
@@ -28,7 +27,7 @@ amplitude = truncate((24 * micronsPerLayer) / micronsPerInch, precision)
 # 6 is the measured in 16 microns steps, depth of tops of wave in groove from uppermost surface of record
 depth = truncate((6 * micronsPerLayer) / micronsPerInch, precision)
 bevel = 0.5 # bevelled groove edge
-grooveWidth = truncate(1/275, precision) # in 600dpi pixels
+grooveWidth = truncate(1/250, precision) # in 600dpi pixels
 incrNum = truncate(tau / thetaIter, precision) # calculcate angular incrementation amount
 radIncr = truncate((grooveWidth + 2 * bevel * amplitude) / thetaIter, precision)  # calculate radial incrementation amount
 rateDivisor = 4.0 # Not sure what this should be yet
