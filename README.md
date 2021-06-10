@@ -11,9 +11,9 @@ pip install -r requirements.txt
 ```
 
 ## Usage
-#GUI
+### GUI
 
-#CLI
+### CLI
 Add audio file, wav, wave, aifc or aiff, to audio folder then run
 ```bash
 python3 src/lpcm_to_csv.py <filename>
