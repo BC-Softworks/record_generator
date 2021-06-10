@@ -11,7 +11,6 @@ pip install -r requirements.txt
 ```
 
 ## Usage
-### GUI
 
 ### CLI
 Add audio file, wav, wave, aifc or aiff, to audio folder then run
