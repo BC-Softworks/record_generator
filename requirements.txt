@@ -11,6 +11,7 @@ globre==0.1.5
 idna==2.10
 numpy==1.20.3
 python-gitlab==2.6.0
+PyGObject==3.40.1 
 PyYAML==5.4.1
 requests==2.25.1
 requests-toolbelt==0.9.1
