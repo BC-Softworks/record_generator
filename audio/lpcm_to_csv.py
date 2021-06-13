@@ -24,7 +24,7 @@ class audio_mode(Enum):
 def process_channels(auto_data, numch, numframes):
   merged = np.zeros((numframes//numch,), dtype=np.byte)
   for i in range(0, numch):
-    print ("Extracting {} / {} channels, {} depth".format(i+1, numch, bit_depth))
+    print ("Extracting {} / {} channels".format(i+1, numch))
     ch_data = auto_data[i:numframes:numch]
     print(len(ch_data))
     merged = np.add(merged, ch_data)
@@ -48,28 +48,28 @@ def write_channels(merged, filename):
   csvfile.write('0')
   csvfile.close()
 
-def aifctocsv(filename, mode=audioMode.MONO):
+def aifctocsv(filename, mode=audio_mode.MONO):
   with aifc.open(filename, 'rb') as aif:
     numframes = aif.getnframes()
     numframes -= numframes % 2
 
+    # Create buffer for audio channel(s)
+    auto_data = np.frombuffer(aif.readframes(numframes), dtype=np.byte)
     numch = aif.getnchannels()
     depth = aif.getsampwidth()
-    # Create buffer for audio channel(s)
-    auto_data = np.frombuffer(aifc.readframes(numframes), dtype=np.byte)
     merged = process_channels(auto_data, numch, numframes)
     write_channels(normalize_data(merged, numch, depth), filename)
 
-def wavetocsv(filename, mode=audioMode.MONO):
+def wavetocsv(filename, mode=audio_mode.MONO):
   with wave.open(filename, 'rb') as wav:
     numframes = wav.getnframes()
     numframes -= numframes % 2
     
-    numch = wav.getnchannels()
-    depth = wav.getsampwidth()
     auto_data = np.frombuffer(wav.readframes(numframes), dtype=np.byte)
 
     # Averages the wave for each channel
+    numch = wav.getnchannels()
+    depth = wav.getsampwidth()
     merged = process_channels(auto_data, numch, numframes)
     write_channels(normalize_data(merged, numch, depth), filename)
 

@@ -1,26 +1,23 @@
-# Define variables
 from bidict import bidict
 import numpy as np
-import math
-
+from math import pi
 
 def truncate(n, decimals=0):
     multiplier = 10 ** decimals
     return int(n * multiplier) / multiplier
 
 precision = 5
-tau = truncate(2 * math.pi, precision)
+tau = truncate(2 * pi, precision)
 samplingRate = 44100 # 44.1khz audio
 rpm = 45
-#Increasing spaces by increasing down sampling was 4
-downsampling = 8 #4
+downsampling = 4
 thetaIter = truncate((60 * samplingRate) / (downsampling * rpm), precision)
 diameter = 7 # diameter of record in inches
-radius = truncate(diameter / 2, precision) # radius of record inches
+radius = 3.5 # radius of record inches
 innerHole = 1.5 # For 33 1/3 rpm 0.286 # diameter of center hole in inches
 innerRad = truncate(0.80, precision) # radius of innermost groove in inches
 outerRad = truncate(3.48, precision)  # radius of outermost groove in inches
-recordHeight = rH = truncate(1/4, precision)
+recordHeight = rH = truncate(0.25, precision)
 micronsPerInch = 25400
 micronsPerLayer = 16 # microns per vertical print layer
 # 24 is the amplitude of signal (in 16 micron steps)
@@ -31,29 +28,8 @@ bevel = 0.5 # bevelled groove edge
 grooveWidth = truncate(1/275, precision) # in 600dpi pixels
 incrNum = truncate(tau / thetaIter, precision) # calculcate angular incrementation amount
 radIncr = truncate((grooveWidth + 2 * bevel * amplitude) / thetaIter, precision)  # calculate radial incrementation amount
-rateDivisor = 4.0 # Not sure what this should be yet
+rateDivisor = 4 # Not sure what this should be yet
 
-def print_constants():
-    print("Record constants")
-    print("samplingRate: {}".format(samplingRate))
-    print("rpm: {}".format(rpm))
-    print("downsampling: {}".format(downsampling))
-    print("thetaIter: {}".format(thetaIter))
-    print("diameter: {}".format(diameter))
-    print("radius: {}".format(radius))
-    print("innerHole: {}".format(innerHole))
-    print("innerRad: {}".format(innerRad))
-    print("outerRad: {}".format(outerRad))
-    print("recordHeight: {}".format(recordHeight))
-    print("micronsPerInch: {}".format(micronsPerInch))
-    print("micronsPerLayer: {}".format(micronsPerLayer))
-    print("amplitude: {}".format(amplitude))
-    print("depth: {}".format(depth))
-    print("bevel: {}".format(bevel))
-    print("grooveWidth: {}".format(grooveWidth))
-    print("incrNum: {}".format(incrNum))
-    print("radIncr: {}".format(radIncr))
-    print("rateDivisor: {}".format(rateDivisor))
 
 class _3DShape:
     def __init__(self, dict={}):
@@ -88,11 +64,6 @@ class _3DShape:
         return np.array(self.faces)
 
     def tristrip(self, a, b):
-        assert isinstance(a, list) and len(a) > 0
-        assert isinstance(b, list) and len(b) > 0
-
-        i = 0
-        while i < min(len(a), len(b)) - 1:
+        for i in range(0, min(len(a), len(b)) - 1):
             self.add_face(a[i], a[i+1], b[i])
-            self.add_face(b[i], b[i+1], a[i+1])
-            i += 1
+            self.add_face(b[i], b[i+1], a[i])

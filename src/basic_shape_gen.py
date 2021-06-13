@@ -5,15 +5,14 @@ from stl import mesh
 
 import pickle
 import numpy as np
-import sin from math
-import cos from math
+from math import cos, sin
 
 from matplotlib import pyplot
 from mpl_toolkits import mplot3d
 
-from record_globals import precision, tau, samplingRate,rpm, downsampling, thetaIter, diameter
-from record_globals import radius, innerHole, innerRad, outerRad, rH, amplitude, _3DShape
-from record_globals import depth, bevel, grooveWidth, incrNum, radIncr, rateDivisor, truncate
+from record_globals import precision, tau, samplingRate,rpm, downsampling, thetaIter, diameter, radIncr, rateDivisor
+from record_globals import radius, innerHole, innerRad, outerRad, rH, amplitude, depth, bevel, grooveWidth, incrNum
+from record_globals import truncate, _3DShape
 
 # Generate circumference of record
 # Recursive call comes first to to order of evaluation
@@ -37,9 +36,8 @@ def setzpos(arr) -> tuple:
   return (x , y)
 
 # Combine the vectors in to an outer and inner circle
-def calculate_record_shape() -> mesh.Mesh:
-  recordShape = _3DShape()
-  #Create vector lists
+def calculate_record_shape(recordShape = _3DShape()) -> mesh.Mesh:
+
   (outerEdgeUpper, outerEdgeLower) = setzpos(generatecircumference(0, radius))
   (centerHoleUpper, centerHoleLower) = setzpos(generatecircumference(0, innerHole / 2))
   (spacingUpper, spacingLower) = setzpos(generatecircumference(0, innerRad))

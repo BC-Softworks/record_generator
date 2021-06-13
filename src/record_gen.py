@@ -2,18 +2,18 @@
 
 import pickle
 import numpy as np
-import sin from math
-import cos from math
+from math import cos, sin
 import csv
+import datetime
 
 import stl
 from stl import mesh
 from mpl_toolkits import mplot3d
 from matplotlib import pyplot
 
-from record_globals import precision, tau, samplingRate,rpm, downsampling, thetaIter, diameter
-from record_globals import radius, innerHole, innerRad, outerRad, rH, amplitude, _3DShape
-from record_globals import depth, bevel, grooveWidth, incrNum, radIncr, rateDivisor, truncate
+from record_globals import precision, tau, samplingRate,rpm, downsampling, thetaIter, diameter, radIncr, rateDivisor
+from record_globals import radius, innerHole, innerRad, outerRad, rH, amplitude, depth, bevel, grooveWidth, incrNum
+from record_globals import truncate, _3DShape
 
 from basic_shape_gen import setzpos, shape_to_mesh, generatecircumference
 
@@ -34,13 +34,14 @@ def ol(r, theta, gH) -> tuple:
 #Inner Lower vertex
 def il(r, theta, gH) -> tuple:
   w = r - grooveWidth
-  return (r + w * math.cos(theta), r + w * math.sin(theta), gH)
+  return (r + w * cos(theta), r + w * sin(theta), gH)
 
 def grooveHeight(audio_array, samplenum):
-  return truncate(rH-depth-amplitude+audio_array[int(rateDivisor*samplenum)], precision);
+  baseline = rH-depth-amplitude
+  return truncate(baseline+audio_array[int(rateDivisor*samplenum)], precision)
 
 # r is the radial postion of the vertex beign drawn
-def draw_grooves(audio_array, r, shape = _3DShape()):
+def draw_spiral(audio_array, r, shape = _3DShape()):
 
   # Print number of grooves to draw
   totalGrooveNum = len(audio_array) // (rateDivisor * thetaIter)
@@ -78,7 +79,6 @@ def draw_grooves(audio_array, r, shape = _3DShape()):
 
       lastEdge = grooveOuterUpper if index == 0 else inner
 
-      #Connect verticies
       if index == 0:
           #Draw triangle to close outer part of record
           shape.tristrip(lastEdge, grooveOuterUpper)
@@ -87,7 +87,7 @@ def draw_grooves(audio_array, r, shape = _3DShape()):
           #Complete beginning cap if necessary
           s1 = [ou(r, amplitude, bevel, theta, rH), iu(r, amplitude, bevel, theta, rH)]
           shape.add_vertices(s1)
-          shape.tristrip(s1,s1);
+          shape.tristrip(s1,s1)
       else:
           shape.tristrip(lastEdge, grooveOuterLower)
       
@@ -104,7 +104,7 @@ def draw_grooves(audio_array, r, shape = _3DShape()):
   shape.add_vertices(cap)
 
   #Draw triangles
-  shape.tristrip(stop1,stop2);
+  shape.tristrip(stop1,stop2)
 
   #Fill in around cap
   stop3 = [lastEdge[-1], (r+innerRad, r, rH)]
@@ -139,20 +139,18 @@ def main(filename, stlname):
   print("Pre-engraving faces: " + str(len(recordShape.get_faces())))
 
   ## For debugging
-  shape_to_mesh(draw_grooves(normalizedDepth, outerRad, recordShape)).save("grooves.stl")
+  # shape_to_mesh(draw_spiral(normalizedDepth, outerRad, recordShape)).save("grooves.stl")
 
-  shape = draw_grooves(normalizedDepth, outerRad, recordShape)
-  print("Done drawing grooves.\nTranslating grooves to mesh object.")
-
-  faces = shape.get_faces()
-  vertices = shape.get_vertices()
+  shape = draw_spiral(normalizedDepth, outerRad, recordShape)
   full_mesh = shape_to_mesh(shape)
   
-  print("Post-engraving vertices: " + str(len(vertices)))
-  print("Post-engraving faces: " + str(len(faces)))
+  # print("Post-engraving vertices: " + str(len(vertices)))
+  # print("Post-engraving faces: " + str(len(faces)))
+
   full_mesh.save("stl/" + stlname + ".stl", mode=stl.Mode.BINARY)
-  print("Done.")
 
 #Run program
 if __name__ == '__main__':
+    now = datetime.datetime.now()
     main("audio/sample.csv", "sample_engraved")
+    print("Time taken: " + str(datetime.datetime.now() - now)[5:9])
