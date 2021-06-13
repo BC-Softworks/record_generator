@@ -5,20 +5,22 @@ from stl import mesh
 
 import pickle
 import numpy as np
-import math
+import sin from math
+import cos from math
 
 from matplotlib import pyplot
 from mpl_toolkits import mplot3d
 
-import record_constant
-from record_constant import *
+from record_globals import precision, tau, samplingRate,rpm, downsampling, thetaIter, diameter
+from record_globals import radius, innerHole, innerRad, outerRad, rH, amplitude, _3DShape
+from record_globals import depth, bevel, grooveWidth, incrNum, radIncr, rateDivisor, truncate
 
 # Generate circumference of record
 # Recursive call comes first to to order of evaluation
 def generatecircumference(t, r) -> list:
   lst = []
-  while t < record_constant.tau:
-    lst.append([radius + r * math.sin(t), radius + r * math.cos(t)])
+  while t < tau:
+    lst.append([radius + r * sin(t), radius + r * cos(t)])
     t += truncate(incrNum, precision)
 
   return lst
@@ -36,7 +38,7 @@ def setzpos(arr) -> tuple:
 
 # Combine the vectors in to an outer and inner circle
 def calculate_record_shape() -> mesh.Mesh:
-  recordShape = record_constant._3DShape()
+  recordShape = _3DShape()
   #Create vector lists
   (outerEdgeUpper, outerEdgeLower) = setzpos(generatecircumference(0, radius))
   (centerHoleUpper, centerHoleLower) = setzpos(generatecircumference(0, innerHole / 2))
@@ -71,14 +73,6 @@ def shape_to_mesh(shape) -> mesh.Mesh:
     for j in range(3):
       rec.vectors[i][j] = vertices[f[j],:]
   return rec
-
-def display_stl(record_mesh):
-  # Create a new plot
-  axes = mplot3d.Axes3D(pyplot.figure()) 
-  axes.add_collection3d(mplot3d.art3d.Poly3DCollection(record_mesh.vectors))
-
-  # Show the plot to the screen
-  pyplot.show()
 
 def main():
   filename = str(rpm) + '_disc.stl'
