@@ -6,29 +6,29 @@ def truncate(n, decimals=0):
     multiplier = 10 ** decimals
     return int(n * multiplier) / multiplier
 
-precision = 5
+precision = 4
 tau = truncate(2 * pi, precision)
 samplingRate = 44100 # 44.1khz audio
 rpm = 45
 downsampling = 4
 thetaIter = truncate((60 * samplingRate) / (downsampling * rpm), precision)
-diameter = 7 # diameter of record in inches
-radius = 3.5 # radius of record inches
-innerHole = 1.5 # For 33 1/3 rpm 0.286 # diameter of center hole in inches
-innerRad = truncate(0.80, precision) # radius of innermost groove in inches
-outerRad = truncate(3.48, precision)  # radius of outermost groove in inches
-recordHeight = rH = truncate(0.25, precision)
-micronsPerInch = 25400
+diameter = 175.41875 # diameter of record in inches
+radius = truncate(diameter, precision) # radius of record inches
+innerHole = 38.2524 # For 33 1/3 rpm 0.286 # diameter of center hole in inches
+innerRad = truncate(45, precision) # radius of innermost groove in inches
+outerRad = truncate(173, precision)  # radius of outermost groove in inches
+rH = truncate(4, precision)
+micronsPerMilimeter = 1000
 micronsPerLayer = 16 # microns per vertical print layer
 # 24 is the amplitude of signal (in 16 micron steps)
-amplitude = truncate((24 * micronsPerLayer) / micronsPerInch, precision)
+amplitude = truncate((24 * micronsPerLayer) / micronsPerMilimeter, precision)
 # 6 is the measured in 16 microns steps, depth of tops of wave in groove from uppermost surface of record
-depth = truncate((6 * micronsPerLayer) / micronsPerInch, precision)
+depth = truncate((6 * micronsPerLayer) / micronsPerMilimeter, precision)
 bevel = 0.5 # bevelled groove edge
-grooveWidth = truncate(1/275, precision) # in 600dpi pixels
+grooveWidth = truncate(0.05588, precision) # in 600dpi pixels
 incrNum = truncate(tau / thetaIter, precision) # calculcate angular incrementation amount
 radIncr = truncate((grooveWidth + 2 * bevel * amplitude) / thetaIter, precision)  # calculate radial incrementation amount
-rateDivisor = 4 # Not sure what this should be yet
+rateDivisor = 4.45 # Not sure what this should be yet
 
 
 class _3DShape:

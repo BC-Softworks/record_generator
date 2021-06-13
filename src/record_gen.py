@@ -143,9 +143,6 @@ def main(filename, stlname):
 
   shape = draw_spiral(normalizedDepth, outerRad, recordShape)
   full_mesh = shape_to_mesh(shape)
-  
-  # print("Post-engraving vertices: " + str(len(vertices)))
-  # print("Post-engraving faces: " + str(len(faces)))
 
   full_mesh.save("stl/" + stlname + ".stl", mode=stl.Mode.BINARY)
 
