@@ -2,7 +2,8 @@
 
 import pickle
 import numpy as np
-import math
+import sin from math
+import cos from math
 import csv
 
 import stl
@@ -10,26 +11,25 @@ from stl import mesh
 from mpl_toolkits import mplot3d
 from matplotlib import pyplot
 
-import record_constant
-from record_constant import *
+from record_globals import precision, tau, samplingRate,rpm, downsampling, thetaIter, diameter
+from record_globals import radius, innerHole, innerRad, outerRad, rH, amplitude, _3DShape
+from record_globals import depth, bevel, grooveWidth, incrNum, radIncr, rateDivisor, truncate
 
-from basic_shape_gen import setzpos
-from basic_shape_gen import shape_to_mesh
-from basic_shape_gen import generatecircumference
+from basic_shape_gen import setzpos, shape_to_mesh, generatecircumference
 
 #Outer Upper vertex
 def ou(r, a, b, theta, rH) -> tuple:
   w = r + a * b
-  return (r + w * math.cos(theta), r + w * math.sin(theta), rH)
+  return (r + w * cos(theta), r + w * sin(theta), rH)
 
 #Inner Upper vertex
 def iu(r, a, b, theta, rH) -> tuple:
   w = r - grooveWidth - a * b
-  return (r + w * math.cos(theta), r + w * math.sin(theta), rH)
+  return (r + w * cos(theta), r + w * sin(theta), rH)
 
 #Outer Lower vertex
 def ol(r, theta, gH) -> tuple:
-  return (r + r * math.cos(theta), r + r * math.sin(theta), gH)
+  return (r + r * cos(theta), r + r * sin(theta), gH)
 
 #Inner Lower vertex
 def il(r, theta, gH) -> tuple:
@@ -37,10 +37,10 @@ def il(r, theta, gH) -> tuple:
   return (r + w * math.cos(theta), r + w * math.sin(theta), gH)
 
 def grooveHeight(audio_array, samplenum):
-  return truncate(recordHeight-depth-amplitude+audio_array[int(rateDivisor*samplenum)], precision);
+  return truncate(rH-depth-amplitude+audio_array[int(rateDivisor*samplenum)], precision);
 
 # r is the radial postion of the vertex beign drawn
-def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
+def draw_grooves(audio_array, r, shape = _3DShape()):
 
   # Print number of grooves to draw
   totalGrooveNum = len(audio_array) // (rateDivisor * thetaIter)
@@ -120,15 +120,8 @@ def draw_grooves(audio_array, r, shape = record_constant._3DShape()):
 
   return shape
 
-def display_stl_mplot():
-  axes = mplot3d.Axes3D(pyplot.figure())
-  axes.add_collection3d(mplot3d.art3d.Poly3DCollection(com.vectors))
-
-  # Show the plot to the screen
-  pyplot.show()
-
 # Main function
-def main(filename, stlname, pickling=False):
+def main(filename, stlname):
 
   # Read in array of bytes as float
   lst = [x for x in csv.reader(open(filename, 'rt', newline=''), delimiter=',')][0]
