@@ -10,25 +10,24 @@ precision = 4
 tau = truncate(2 * pi, precision)
 samplingRate = 44100 # 44.1khz audio
 rpm = 45
-downsampling = 4
+downsampling = 6
 thetaIter = truncate((60 * samplingRate) / (downsampling * rpm), precision)
-diameter = 175.41875 # diameter of record in inches
-radius = truncate(diameter, precision) # radius of record inches
-innerHole = 38.2524 # For 33 1/3 rpm 0.286 # diameter of center hole in inches
-innerRad = truncate(45, precision) # radius of innermost groove in inches
-outerRad = truncate(173, precision)  # radius of outermost groove in inches
+diameter = 175.41875 # diameter of record in mm
+radius = diameter # radius of record mm
+innerHole = 38.2524 # For 33 1/3 rpm 0.286 # diameter of center hole in mm
+innerRad = truncate(45, precision) # radius of innermost groove in mm
+outerRad = truncate(170, precision)  # radius of outermost groove in mm
 rH = truncate(4, precision)
-micronsPerMilimeter = 1000
 micronsPerLayer = 16 # microns per vertical print layer
 # 24 is the amplitude of signal (in 16 micron steps)
-amplitude = truncate((24 * micronsPerLayer) / micronsPerMilimeter, precision)
+amplitude = truncate((24 * micronsPerLayer) / 1000, precision)
 # 6 is the measured in 16 microns steps, depth of tops of wave in groove from uppermost surface of record
-depth = truncate((6 * micronsPerLayer) / micronsPerMilimeter, precision)
+depth = truncate((6 * micronsPerLayer) / 1000, precision)
 bevel = 0.5 # bevelled groove edge
-grooveWidth = truncate(0.05588, precision) # in 600dpi pixels
+gW = truncate(0.05588, precision) # in 600dpi pixels grooveWidth
 incrNum = truncate(tau / thetaIter, precision) # calculcate angular incrementation amount
-radIncr = truncate((grooveWidth + 2 * bevel * amplitude) / thetaIter, precision)  # calculate radial incrementation amount
-rateDivisor = 4.45 # Not sure what this should be yet
+radIncr = truncate((gW + 2 * bevel * amplitude) / thetaIter, precision)  # calculate radial incrementation amount
+rateDivisor = 4.0 # Not sure what this should be yet
 
 
 class _3DShape:

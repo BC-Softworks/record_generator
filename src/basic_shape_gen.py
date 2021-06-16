@@ -10,8 +10,8 @@ from math import cos, sin
 from matplotlib import pyplot
 from mpl_toolkits import mplot3d
 
-from record_globals import precision, tau, samplingRate,rpm, downsampling, thetaIter, diameter, radIncr, rateDivisor
-from record_globals import radius, innerHole, innerRad, outerRad, rH, amplitude, depth, bevel, grooveWidth, incrNum
+from record_globals import precision, tau, rpm, depth, incrNum
+from record_globals import radius, innerHole, innerRad, rH
 from record_globals import truncate, _3DShape
 
 # Generate circumference of record
@@ -19,7 +19,7 @@ from record_globals import truncate, _3DShape
 def generatecircumference(t, r) -> list:
   lst = []
   while t < tau:
-    lst.append([radius + r * sin(t), radius + r * cos(t)])
+    lst.append([r * sin(t), r * cos(t)])
     t += truncate(incrNum, precision)
 
   return lst
