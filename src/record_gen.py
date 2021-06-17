@@ -43,14 +43,14 @@ def iu(r, a, b, theta, rH, gH) -> tuple:
 def ol(r, theta, gH) -> tuple:
   x, y = r * cos(theta), r * sin(theta)
   v, h = (x, y, gH), hm(x, y, gH)  #v, h = (r + x, r + y, gH), hm(x, y, gH)
-  return h[0] + v[0], h[1] + v[1], rH  - 0.25
+  return h[0] + v[0], h[1] + v[1], rH  - 0.75
 
 #Inner Lower vertex
 def il(r, theta, gH) -> tuple:
   w = r - gW
   x, y = r * cos(theta), r * sin(theta)
   v, h = (x, y, gH), hm(x, y, gH)  #v, h = (r + x, r + y, gH), hm(x, y, gH)
-  return h[0] + v[0], h[1] + v[1], rH - 0.25
+  return h[0] + v[0], h[1] + v[1], rH - 0.75
 
 def grooveHeight(audio_array, samplenum):
   baseline = rH-depth-amplitude
@@ -166,5 +166,5 @@ def main(filename, stlname):
 #Run program
 if __name__ == '__main__':
     now = datetime.datetime.now()
-    main("audio/sample.csv", "sample_engraved")
-    print("Time taken: " + str(datetime.datetime.now() - now)[5:9])
+    main("audio/HappySwing.csv", "HappySwing_engraved")
+    print("Time taken: " + str(datetime.datetime.now() - now)[3:9])

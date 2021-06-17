@@ -79,3 +79,4 @@ venv.bak/
 /audio/*.csv
 *.stl
 *.gz
+*.wav
