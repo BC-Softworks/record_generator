@@ -1,36 +1,37 @@
-#!/usr/bin/env python
-
-import stl
-from stl import mesh
+#!/usr/bin/python3
 
 import pickle
 import numpy as np
 from math import cos, sin
 
-from matplotlib import pyplot
-from mpl_toolkits import mplot3d
+# https://pypi.org/project/numpy-stl/
+import stl
+from stl import mesh
 
+# Performance mesuring
+import memory_profiler
+import time
+
+# Global variables
 from record_globals import precision, tau, rpm, depth, incrNum
 from record_globals import radius, innerHole, innerRad, rH
 from record_globals import truncate, _3DShape
 
 # Generate circumference of record
-# Recursive call comes first to to order of evaluation
-def generatecircumference(t, r) -> list:
-  lst = []
+# Use memorization to speed up generator
+
+def circumference_generator(t, r, i = truncate(incrNum, precision)):
   while t < tau:
-    lst.append([r * sin(t), r * cos(t)])
-    t += truncate(incrNum, precision)
-
-  return lst
-
+    yield [r * sin(t), r * cos(t)]
+    t += i
+  
 #Add z position to each vector of x and y
 def setzpos(arr) -> tuple:
   x = list()
   y = list()
   for lst in arr:
-      x = x + [(lst[0], lst[1], rH)]
-      y = y + [(lst[0], lst[1], 0.0)]
+      x += [(lst[0], lst[1], rH)]
+      y += [(lst[0], lst[1], 0.0)]
   
   assert len(x[0]) == 3
   return (x , y)
@@ -38,9 +39,9 @@ def setzpos(arr) -> tuple:
 # Combine the vectors in to an outer and inner circle
 def calculate_record_shape(recordShape = _3DShape()) -> mesh.Mesh:
 
-  (outerEdgeUpper, outerEdgeLower) = setzpos(generatecircumference(0, radius))
-  (centerHoleUpper, centerHoleLower) = setzpos(generatecircumference(0, innerHole / 2))
-  (spacingUpper, spacingLower) = setzpos(generatecircumference(0, innerRad))
+  (outerEdgeUpper, outerEdgeLower) = setzpos(circumference_generator(0, radius))
+  (centerHoleUpper, centerHoleLower) = setzpos(circumference_generator(0, innerHole / 2))
+  (spacingUpper, spacingLower) = setzpos(circumference_generator(0, innerRad))
   
   print("Condense vertices into a single list")
   outer = outerEdgeUpper + outerEdgeLower
@@ -88,4 +89,11 @@ def main():
   record_mesh.save("stl/" + filename)
 
 if __name__ == '__main__':
+  m1 = memory_profiler.memory_usage()
+  t1 = time.process_time()
   main()
+  t2 = time.process_time()
+  m2 = memory_profiler.memory_usage()
+  time_diff = t2 - t1
+  mem_diff = m2[0] - m1[0]
+  print(f"It took {time_diff:.2f} Secs and {mem_diff:.2f} Mb to execute this method")

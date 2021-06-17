@@ -4,19 +4,20 @@ import pickle
 import numpy as np
 from math import cos, pow, sin, sqrt
 import csv
-from operator import add, mul
-import datetime
 
+# https://pypi.org/project/numpy-stl/
 import stl
 from stl import mesh
-from mpl_toolkits import mplot3d
-from matplotlib import pyplot
+
+# Performance mesuring
+import memory_profiler
+import time
 
 from record_globals import precision, tau, samplingRate,rpm, downsampling, thetaIter, diameter, radIncr, rateDivisor
 from record_globals import radius, innerHole, innerRad, outerRad, rH, amplitude, depth, bevel, gW, incrNum
 from record_globals import truncate, _3DShape
 
-from basic_shape_gen import setzpos, shape_to_mesh, generatecircumference
+from basic_shape_gen import setzpos, shape_to_mesh, circumference_generator
 
 # horizontial_modulation
 def hm(x, y, gH):
@@ -29,27 +30,27 @@ def hm(x, y, gH):
 def ou(r, a, b, theta, rH, gH) -> tuple:
   w = r + a * b
   x, y = w * cos(theta), w * sin(theta)
-  v, h = (x, y, rH), hm(x, y, gH)  #v, h = (r + x, r + y, gH), hm(x, y, gH)
+  v, h = (x, y, rH), hm(x, y, gH)
   return h[0] + v[0], h[1] + v[1], rH
 
 #Inner Upper vertex
 def iu(r, a, b, theta, rH, gH) -> tuple:
   w = r - gW - a * b
   x, y = w * cos(theta), w * sin(theta)
-  v, h = (x, y, rH), hm(x, y, gH)  #v, h = (r + x, r + y, gH), hm(x, y, gH)
+  v, h = (x, y, rH), hm(x, y, gH)
   return h[0] + v[0], h[1] + v[1], rH
   
 #Outer Lower vertex
 def ol(r, theta, gH) -> tuple:
   x, y = r * cos(theta), r * sin(theta)
-  v, h = (x, y, gH), hm(x, y, gH)  #v, h = (r + x, r + y, gH), hm(x, y, gH)
+  v, h = (x, y, gH), hm(x, y, gH)
   return h[0] + v[0], h[1] + v[1], rH  - 0.75
 
 #Inner Lower vertex
 def il(r, theta, gH) -> tuple:
   w = r - gW
   x, y = r * cos(theta), r * sin(theta)
-  v, h = (x, y, gH), hm(x, y, gH)  #v, h = (r + x, r + y, gH), hm(x, y, gH)
+  v, h = (x, y, gH), hm(x, y, gH)
   return h[0] + v[0], h[1] + v[1], rH - 0.75
 
 def grooveHeight(audio_array, samplenum):
@@ -129,8 +130,8 @@ def draw_spiral(audio_array, r, shape = _3DShape()):
   shape.tristrip(stop1, stop3)
 
   #Close remaining space between last groove and center hole
-  remainingSpace, _ = setzpos(generatecircumference(0, innerRad))
-  edgeOfGroove, _ = setzpos(generatecircumference(0, r))
+  remainingSpace, _ = setzpos(circumference_generator(0, innerRad))
+  edgeOfGroove, _ = setzpos(circumference_generator(0, r))
   shape.add_vertices(remainingSpace + edgeOfGroove)
 
   shape.tristrip(remainingSpace, edgeOfGroove)
@@ -165,6 +166,11 @@ def main(filename, stlname):
 
 #Run program
 if __name__ == '__main__':
-    now = datetime.datetime.now()
-    main("audio/HappySwing.csv", "HappySwing_engraved")
-    print("Time taken: " + str(datetime.datetime.now() - now)[3:9])
+  m1 = memory_profiler.memory_usage()
+  t1 = time.process_time()
+  main("audio/HappySwing.csv", "HappySwing_engraved")
+  t2 = time.process_time()
+  m2 = memory_profiler.memory_usage()
+  time_diff = t2 - t1
+  mem_diff = m2[0] - m1[0]
+  print(f"It took {time_diff:.2f} Secs and {mem_diff:.2f} Mb to execute this method")
