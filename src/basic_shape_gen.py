@@ -18,8 +18,6 @@ from record_globals import radius, innerHole, innerRad, rH
 from record_globals import truncate, _3DShape
 
 # Generate circumference of record
-# Use memorization to speed up generator
-
 def circumference_generator(t, r, i = truncate(incrNum, precision)):
   while t < tau:
     yield [r * sin(t), r * cos(t)]
