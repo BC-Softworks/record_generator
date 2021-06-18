@@ -14,7 +14,7 @@ import time
 
 # Global variables
 from record_globals import precision, tau, rpm, depth, incrNum
-from record_globals import radius, innerHole, innerRad, rH
+from record_globals import radius, innerHole, innerRad, outerRad, rH
 from record_globals import truncate, _3DShape
 
 # Generate circumference of record
@@ -38,25 +38,34 @@ def setzpos(arr) -> tuple:
 def calculate_record_shape(recordShape = _3DShape()) -> mesh.Mesh:
 
   (outerEdgeUpper, outerEdgeLower) = setzpos(circumference_generator(0, radius))
-  (centerHoleUpper, centerHoleLower) = setzpos(circumference_generator(0, innerHole / 2))
+  (outerGrooveEdgeUpper, outerGrooveEdgeLower) = setzpos(circumference_generator(0, outerRad))
   (spacingUpper, spacingLower) = setzpos(circumference_generator(0, innerRad))
+  (centerHoleUpper, centerHoleLower) = setzpos(circumference_generator(0, innerHole / 2))
+
   
   print("Condense vertices into a single list")
   outer = outerEdgeUpper + outerEdgeLower
+  outerGroove = outerGrooveEdgeUpper + outerGrooveEdgeLower
   center = centerHoleUpper + centerHoleLower
   spacing = spacingUpper + spacingLower
-  lst = outer + center + spacing
+  lst = outer + outerGroove + center + spacing
 
   print("Add vertices to shape")
   recordShape.add_vertices(lst)
 
   #Set faces
-  print("Connecting vertices")
-  recordShape.tristrip(spacingLower, outerEdgeLower)
+  print("Construct outer spacer")
   recordShape.tristrip(outerEdgeLower, outerEdgeUpper)
-  
+  recordShape.tristrip(outerEdgeLower, outerGrooveEdgeLower)
+  recordShape.tristrip(outerEdgeUpper, outerGrooveEdgeUpper)
+  recordShape.tristrip(outerGrooveEdgeLower, outerGrooveEdgeUpper)
+
+  print("Construct inner spacer")
+  recordShape.tristrip(spacingLower, outerGrooveEdgeLower)  
   recordShape.tristrip(centerHoleUpper, spacingUpper)
   recordShape.tristrip(centerHoleLower, spacingLower)
+  
+  print("Construct center hole")
   recordShape.tristrip(spacingLower, spacingUpper)
   recordShape.tristrip(centerHoleUpper, centerHoleLower)
 

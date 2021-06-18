@@ -6,18 +6,18 @@ def truncate(n, decimals=0):
     multiplier = 10 ** decimals
     return int(n * multiplier) / multiplier
 
-precision = 5
+precision = 6
 tau = truncate(2 * pi, precision)
 samplingRate = 44100 # 44.1khz audio
 rpm = 45
-downsampling = 1.5 #4
+downsampling = 2.96
 thetaIter = truncate((60 * samplingRate) / (downsampling * rpm), precision)
-diameter = 90 #175.41875 # diameter of record in mm
-radius = diameter / 2 # radius of record mm
+diameter = 100 #175.41875 # diameter of record in mm
+radius = diameter // 2 # radius of record mm
 innerHole = 38.2524 # For 33 1/3 rpm 0.286 # diameter of center hole in mm
-innerRad = truncate(45, precision) # radius of innermost groove in mm
-outerRad = truncate(89.5, precision) # truncate(170, precision)  # radius of outermost groove in mm
-rH = truncate(8, precision)
+innerRad = truncate(39, precision) # radius of innermost groove in mm
+outerRad = truncate(49, precision) # truncate(170, precision)  # radius of outermost groove in mm
+rH = truncate(10, precision)
 micronsPerLayer = 16 # microns per vertical print layer
 # 24 is the amplitude of signal (in 16 micron steps)
 amplitude = truncate((24 * micronsPerLayer) / 1000, precision)
@@ -39,7 +39,7 @@ class _3DShape:
         return str(self.vertices)
 
     def add_vertex(self, xyz) -> int:
-        assert len(xyz) == 3 #;print(xyz)
+        assert len(xyz) == 3
         index = len(self.vertices)
         if xyz not in self.vertices.inverse: 
             self.vertices[index] = xyz

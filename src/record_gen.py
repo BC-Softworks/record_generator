@@ -44,18 +44,18 @@ def iu(r, a, b, theta, rH, gH) -> tuple:
 def ol(r, theta, gH) -> tuple:
   x, y = r * cos(theta), r * sin(theta)
   v, h = (x, y, gH), hm(x, y, gH)
-  return h[0] + v[0], h[1] + v[1], rH  - 0.75
+  return h[0] + v[0], h[1] + v[1], rH  - 0.5
 
 #Inner Lower vertex
 def il(r, theta, gH) -> tuple:
   w = r - gW
   x, y = r * cos(theta), r * sin(theta)
   v, h = (x, y, gH), hm(x, y, gH)
-  return h[0] + v[0], h[1] + v[1], rH - 0.75
+  return h[0] + v[0], h[1] + v[1], rH - 0.5
 
 def grooveHeight(audio_array, samplenum):
   baseline = rH-depth-amplitude
-  return truncate(baseline*audio_array[int(rateDivisor*samplenum)], precision)
+  return truncate(baseline*audio_array[int(rateDivisor*samplenum)]/2, precision)
 
 # r is the radial postion of the vertex beign drawn
 def draw_spiral(audio_array, r, shape = _3DShape()):
