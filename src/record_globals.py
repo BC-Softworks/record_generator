@@ -1,23 +1,27 @@
 from bidict import bidict
 import numpy as np
 from math import pi
+from collections import OrderedDict
+
+# https://pypi.org/project/numpy-stl/
+from stl import mesh
 
 def truncate(n, decimals=0):
     multiplier = 10 ** decimals
     return int(n * multiplier) / multiplier
 
-precision = 6
+precision = 5
 tau = truncate(2 * pi, precision)
 samplingRate = 44100 # 44.1khz audio
 rpm = 45
-downsampling = 2.96
+downsampling = 8 # 2.9696 optimal
 thetaIter = truncate((60 * samplingRate) / (downsampling * rpm), precision)
-diameter = 100 #175.41875 # diameter of record in mm
+diameter = 170 # diameter of record in mm
 radius = diameter // 2 # radius of record mm
-innerHole = 38.2524 # For 33 1/3 rpm 0.286 # diameter of center hole in mm
-innerRad = truncate(39, precision) # radius of innermost groove in mm
-outerRad = truncate(49, precision) # truncate(170, precision)  # radius of outermost groove in mm
-rH = truncate(10, precision)
+outerRad = truncate(70, precision) # truncate(170, precision)  # radius of outermost groove in mm
+innerRad = truncate(28, precision) # radius of innermost groove in mm
+innerHole = 38.2524 # For 33 1/3 rpm 0.286 inch # diameter of center hole in mm
+rH = truncate(5, precision)
 micronsPerLayer = 16 # microns per vertical print layer
 # 24 is the amplitude of signal (in 16 micron steps)
 amplitude = truncate((24 * micronsPerLayer) / 1000, precision)
@@ -30,7 +34,7 @@ radIncr = truncate((gW + 2 * bevel * amplitude) / thetaIter, precision)  # calcu
 rateDivisor = 4.0 # Not sure what this should be yet
 
 
-class _3DShape:
+class _3DShape():
     def __init__(self, dict={}):
         self.vertices = bidict(dict)
         self.faces = []
@@ -53,7 +57,7 @@ class _3DShape:
 
     def add_face(self, point_a, point_b, point_c):
         points = [point_a, point_b, point_c]
-        self.faces.append([self.vertices.inverse[x] for x in points])
+        self.faces.append(tuple([self.vertices.inverse[x] for x in points]))
     
     def get_vertices(self):
         lst = [self.vertices[i] for i in range(0, len(self.vertices) )]
@@ -66,3 +70,16 @@ class _3DShape:
         for i in range(0, min(len(a), len(b)) - 1):
             self.add_face(a[i], a[i+1], b[i])
             self.add_face(b[i], b[i+1], a[i])
+
+    def remove_duplicate_faces(self):
+        self.faces = list(OrderedDict.fromkeys(self.faces))
+        
+
+    def shape_to_mesh(shape) -> mesh.Mesh:
+      faces = shape.get_faces()
+      vertices = shape.get_vertices()
+      rec = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
+      for i, f in enumerate(faces):
+        for j in range(3):
+          rec.vectors[i][j] = vertices[f[j],:]
+      return rec

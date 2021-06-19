@@ -17,7 +17,7 @@ from record_globals import precision, tau, samplingRate,rpm, downsampling, theta
 from record_globals import radius, innerHole, innerRad, outerRad, rH, amplitude, depth, bevel, gW, incrNum
 from record_globals import truncate, _3DShape
 
-from basic_shape_gen import setzpos, shape_to_mesh, circumference_generator
+from basic_shape_gen import setzpos, circumference_generator
 
 # horizontial_modulation
 def hm(x, y, gH):
@@ -59,9 +59,6 @@ def grooveHeight(audio_array, samplenum):
 
 # r is the radial postion of the vertex beign drawn
 def draw_spiral(audio_array, r, shape = _3DShape()):
-
-  # Print number of grooves to draw
-  # totalGrooveNum = len(audio_array) // (rateDivisor * thetaIter)
 
   #Inner while for groove position
   lastEdge = None
@@ -133,7 +130,6 @@ def draw_spiral(audio_array, r, shape = _3DShape()):
   remainingSpace, _ = setzpos(circumference_generator(0, innerRad))
   edgeOfGroove, _ = setzpos(circumference_generator(0, r))
   shape.add_vertices(remainingSpace + edgeOfGroove)
-
   shape.tristrip(remainingSpace, edgeOfGroove)
 
   return shape
@@ -152,23 +148,22 @@ def main(filename, stlname):
   shapefile = open("pickle/{}_shape.p".format(rpm), 'rb')
   recordShape = pickle.load(shapefile)
   shapefile.close()
-  
-  print("Pre-engraving vertices: " + str(len(recordShape.get_vertices())))
-  print("Pre-engraving faces: " + str(len(recordShape.get_faces())))
-
-  ## For debugging
-  # shape_to_mesh(draw_spiral(normalizedDepth, outerRad, recordShape)).save("grooves.stl")
-
+  print("Drawing spiral object")
   shape = draw_spiral(normalizedDepth, outerRad, recordShape)
-  full_mesh = shape_to_mesh(shape)
-
+  print("Removing duplicate faces from shape spiral object")
+  shape.remove_duplicate_faces()
+  print("Vertices: " + str(len(shape.get_vertices())))
+  print("Faces: " + str(len(shape.get_faces())))
+  print("Converting shape to mesh object")
+  full_mesh = shape.shape_to_mesh()
+  print("Saving mesh to " + "stl/" + stlname + ".stl")
   full_mesh.save("stl/" + stlname + ".stl", mode=stl.Mode.BINARY)
 
 #Run program
 if __name__ == '__main__':
   m1 = memory_profiler.memory_usage()
   t1 = time.process_time()
-  main("audio/HappySwing.csv", "HappySwing_engraved")
+  main("audio/sample.csv", "Sample_engraved")
   t2 = time.process_time()
   m2 = memory_profiler.memory_usage()
   time_diff = t2 - t1
