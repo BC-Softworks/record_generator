@@ -54,36 +54,31 @@ def setzpos(arr) -> tuple:
 
 # Combine the vectors in to an outer and inner circle
 def calculate_record_shape(recordShape = _3DShape()) -> mesh.Mesh:
-  (spacingUpper, spacingLower) = setzpos(circumference_generator(0, innerRad))
-  (outerGrooveEdgeUpper, outerGrooveEdgeLower) = setzpos(circumference_generator(0, outerRad))
+  spacingUpper, _ = setzpos(circumference_generator(0, innerRad))
+  outerGrooveEdgeUpper, _ = setzpos(circumference_generator(0, outerRad))
+
   
-  length = len(outerGrooveEdgeLower) // 8
+  length = len(spacingUpper) // 8
   expanded = expand_points(list(polygon_generator(innerHole / 2, 8)), length)
-  (centerHoleUpper, centerHoleLower) = setzpos(expanded)
+  centerHoleUpper, centerHoleLower = setzpos(expanded)
   expanded = expand_points(list(polygon_generator(radius, 8)), length)
-  (outerEdgeUpper, outerEdgeLower) = setzpos(expanded)
+  outerEdgeUpper, outerEdgeLower = setzpos(expanded)
 
   
   print("Condense vertices into a single list")
   outer = outerEdgeUpper + outerEdgeLower
-  outerGroove = outerGrooveEdgeUpper + outerGrooveEdgeLower
+  outerGroove = outerGrooveEdgeUpper
   center = centerHoleUpper + centerHoleLower
-  spacing = spacingUpper + spacingLower
+  spacing = spacingUpper
   lst = outer + outerGroove + center + spacing
 
   print("Add vertices to shape")
   recordShape.add_vertices(lst)
 
   #Set faces
-  print("Construct outer spacer")
-  recordShape.tristrip(outerEdgeLower, outerGrooveEdgeLower)
+  print("Constructing faces")
   recordShape.tristrip(outerEdgeUpper, outerGrooveEdgeUpper)
-
-  print("Construct inner spacer")
-  recordShape.tristrip(spacingLower, outerGrooveEdgeLower)  
-  recordShape.tristrip(centerHoleLower, spacingLower)
   recordShape.tristrip(centerHoleUpper, spacingUpper)
-
   
   print("Construct center hole")
   (centerHoleUpper, centerHoleLower) = setzpos(polygon_generator(innerHole / 2, 8))
@@ -103,6 +98,12 @@ def calculate_record_shape(recordShape = _3DShape()) -> mesh.Mesh:
   outerEdgeLower.reverse()
   recordShape.tristrip(outerEdgeUpper, outerEdgeLower)
 
+  print("Construct base")
+  recordShape.tristrip(outerEdgeLower, centerHoleLower)
+  centerHoleLower.reverse()
+  outerEdgeLower.reverse()
+  recordShape.tristrip(outerEdgeLower, centerHoleLower)
+  
   return recordShape
 
 def main():
