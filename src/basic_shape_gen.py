@@ -13,7 +13,7 @@ import memory_profiler
 import time
 
 # Global variables
-from record_globals import precision, tau, rpm, depth, incrNum
+from record_globals import precision, tau, rpm, depth, incrNum, amplitude
 from record_globals import radius, innerHole, innerRad, outerRad, rH
 from record_globals import truncate, _3DShape
 
@@ -44,25 +44,25 @@ def expand_points(lst, n) -> list:
   return expanded
 
 #Add z position to each vector of x and y
-def setzpos(arr) -> tuple:
-  x = list()
-  y = list()
+def setzpos(arr, h=0) -> tuple:
   for lst in arr:
-      x += [(lst[0], lst[1], rH)]
-      y += [(lst[0], lst[1], 0.0)]
-  return (x , y)
-
+      yield(lst[0], lst[1], h)
+      
 # Combine the vectors in to an outer and inner circle
 def calculate_record_shape(recordShape = _3DShape()) -> mesh.Mesh:
-  spacingUpper, _ = setzpos(circumference_generator(0, innerRad))
-  outerGrooveEdgeUpper, _ = setzpos(circumference_generator(0, outerRad))
+  edge_num = 8
+  spacingUpper = list(setzpos(circumference_generator(0, innerRad), rH))
+  outerGrooveEdgeUpper = list(setzpos(circumference_generator(0, outerRad), rH))
 
   
-  length = len(spacingUpper) // 8
-  expanded = expand_points(list(polygon_generator(innerHole / 2, 8)), length)
-  centerHoleUpper, centerHoleLower = setzpos(expanded)
-  expanded = expand_points(list(polygon_generator(radius, 8)), length)
-  outerEdgeUpper, outerEdgeLower = setzpos(expanded)
+  length = len(spacingUpper) // edge_num
+  expanded = expand_points(list(polygon_generator(innerHole / 2, edge_num)), length)
+  centerHoleUpper = list(setzpos(expanded, rH))
+  centerHoleLower = list(setzpos(expanded))
+  
+  expanded = expand_points(list(polygon_generator(radius, edge_num)), length)
+  outerEdgeUpper = list(setzpos(expanded, rH))
+  outerEdgeLower = list(setzpos(expanded))
 
   
   print("Condense vertices into a single list")
@@ -81,7 +81,8 @@ def calculate_record_shape(recordShape = _3DShape()) -> mesh.Mesh:
   recordShape.tristrip(centerHoleUpper, spacingUpper)
   
   print("Construct center hole")
-  (centerHoleUpper, centerHoleLower) = setzpos(polygon_generator(innerHole / 2, 8))
+  centerHoleUpper = list(setzpos(polygon_generator(innerHole / 2, edge_num), rH))
+  centerHoleLower = list(setzpos(polygon_generator(innerHole / 2, edge_num)))
   centerHoleUpper += [centerHoleUpper[0]]
   centerHoleLower += [centerHoleLower[0]]
   recordShape.tristrip(centerHoleUpper, centerHoleLower)
@@ -90,7 +91,8 @@ def calculate_record_shape(recordShape = _3DShape()) -> mesh.Mesh:
   recordShape.tristrip(centerHoleUpper, centerHoleLower)
   
   print("Construct outer perimeter vertical")
-  (outerEdgeUpper, outerEdgeLower) = setzpos(polygon_generator(radius, 8))
+  outerEdgeUpper = list(setzpos(polygon_generator(radius, edge_num), rH))
+  outerEdgeLower = list(setzpos(polygon_generator(radius, edge_num)))
   outerEdgeUpper += [outerEdgeUpper[0]]
   outerEdgeLower += [outerEdgeLower[0]]
   recordShape.tristrip(outerEdgeUpper, outerEdgeLower)
@@ -103,6 +105,19 @@ def calculate_record_shape(recordShape = _3DShape()) -> mesh.Mesh:
   centerHoleLower.reverse()
   outerEdgeLower.reverse()
   recordShape.tristrip(outerEdgeLower, centerHoleLower)
+  
+  print("Construct top")
+  baseline = rH - 0.05
+  outerEdgeMiddle = list(setzpos(polygon_generator(radius, edge_num), baseline))
+  centerHoleMiddle = list(setzpos(polygon_generator(innerHole / 2, edge_num), baseline))
+  outerEdgeMiddle += [outerEdgeMiddle[0]]
+  centerHoleMiddle += [centerHoleMiddle[0]]
+  recordShape.add_vertices(outerEdgeMiddle + centerHoleMiddle)
+
+  recordShape.tristrip(outerEdgeMiddle, centerHoleMiddle)
+  outerEdgeMiddle.reverse()
+  centerHoleMiddle.reverse()
+  recordShape.tristrip(outerEdgeMiddle, centerHoleMiddle)
   
   return recordShape
 

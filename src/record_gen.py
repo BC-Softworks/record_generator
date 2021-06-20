@@ -44,21 +44,22 @@ def iu(r, a, b, theta, rH, gH) -> tuple:
 def ol(r, theta, gH) -> tuple:
   x, y = r * cos(theta), r * sin(theta)
   v, h = (x, y, gH), hm(x, y, gH)
-  return h[0] + v[0], h[1] + v[1], rH  - 0.5
+  return h[0] + v[0], h[1] + v[1], rH - 0.05
 
 #Inner Lower vertex
 def il(r, theta, gH) -> tuple:
   w = r - gW
   x, y = r * cos(theta), r * sin(theta)
   v, h = (x, y, gH), hm(x, y, gH)
-  return h[0] + v[0], h[1] + v[1], rH - 0.5
+  return h[0] + v[0], h[1] + v[1], rH - 0.05
+
 
 def grooveHeight(audio_array, samplenum):
   baseline = rH-depth-amplitude
   return truncate(baseline*audio_array[int(rateDivisor*samplenum)]/2, precision)
 
 # r is the radial postion of the vertex beign drawn
-def draw_spiral(audio_array, r, shape = _3DShape()):
+def draw_spiral(audio_array, r, shape = _3DShape(), info = True):
 
   #Inner while for groove position
   lastEdge = None
@@ -110,7 +111,8 @@ def draw_spiral(audio_array, r, shape = _3DShape()):
       shape.tristrip(grooveInnerLower, grooveInnerUpper)
 
       index += 1
-      print("Groove drawn: {}".format(index))
+      if(info):
+          print("Groove drawn: {}".format(index))
       
   # Draw groove cap
   stop1 = [ou(r, amplitude, bevel, 0, rH, gH), iu(r, amplitude, bevel, 0, rH, gH)]
@@ -127,8 +129,8 @@ def draw_spiral(audio_array, r, shape = _3DShape()):
   shape.tristrip(stop1, stop3)
 
   #Close remaining space between last groove and center hole
-  remainingSpace, _ = setzpos(circumference_generator(0, innerRad))
-  edgeOfGroove, _ = setzpos(circumference_generator(0, r))
+  remainingSpace = list(setzpos(circumference_generator(0, innerRad), rH))
+  edgeOfGroove = list(setzpos(circumference_generator(0, r), rH))
   shape.add_vertices(remainingSpace + edgeOfGroove)
   shape.tristrip(remainingSpace, edgeOfGroove)
 
@@ -145,11 +147,15 @@ def main(filename, stlname):
   m = pow(max(lst), 2)
   normalizedDepth = [truncate(x / m, precision) for x in lst]
 
+  print("Import record shape")
   shapefile = open("pickle/{}_shape.p".format(rpm), 'rb')
   recordShape = pickle.load(shapefile)
   shapefile.close()
+  
+  # draw_spiral(normalizedDepth, outerRad, info = False).shape_to_mesh().save("stl/spiral.stl", mode=stl.Mode.BINARY)
+  
   print("Drawing spiral object")
-  shape = draw_spiral(normalizedDepth, outerRad, recordShape)
+  shape = draw_spiral(normalizedDepth, outerRad, recordShape, info = False)
   print("Removing duplicate faces from shape spiral object")
   shape.remove_duplicate_faces()
   print("Vertices: " + str(len(shape.get_vertices())))
