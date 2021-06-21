@@ -2,7 +2,7 @@
 
 import pickle
 import numpy as np
-from math import cos, sin, sqrt
+from math import cos, sin, sqrt, pow
 
 # https://pypi.org/project/numpy-stl/
 import stl
@@ -20,7 +20,7 @@ from record_globals import truncate, _3DShape
 # Generate circumference of cylinder
 def circumference_generator(t, r, i = truncate(incrNum, precision)):
   while t < tau:
-    yield [r * sin(t), r * cos(t)]
+    yield [truncate(r * sin(t), precision), truncate(r * cos(t), precision)]
     t += i
 
 # Generate perimeter of polygon
@@ -48,51 +48,54 @@ def setzpos(arr, h=0) -> tuple:
   for lst in arr:
       yield(lst[0], lst[1], h)
       
+def create_polygon(r, n, l, h=0):
+  expanded = expand_points(list(polygon_generator(r, n)), l)
+  return list(setzpos(expanded, h))
+  
 # Combine the vectors in to an outer and inner circle
-def calculate_record_shape(recordShape = _3DShape()) -> mesh.Mesh:
+def calculate_record_shape(recordShape = _3DShape(), info = True) -> mesh.Mesh:
   edge_num = 8
-  spacingUpper = list(setzpos(circumference_generator(0, innerRad), rH))
-  outerGrooveEdgeUpper = list(setzpos(circumference_generator(0, outerRad), rH))
-
+  groove_edge_num = 8
+  length = 8
   
-  length = len(spacingUpper) // edge_num
-  expanded = expand_points(list(polygon_generator(innerHole / 2, edge_num)), length)
-  centerHoleUpper = list(setzpos(expanded, rH))
-  centerHoleLower = list(setzpos(expanded))
-  
-  expanded = expand_points(list(polygon_generator(radius, edge_num)), length)
-  outerEdgeUpper = list(setzpos(expanded, rH))
-  outerEdgeLower = list(setzpos(expanded))
+  spacingUpper = create_polygon(innerRad, edge_num, length, rH)
+  outerGrooveEdgeUpper = create_polygon(outerRad + 10, groove_edge_num, length, rH)
 
+  center_radius = innerHole / 2
+  centerHoleUpper = create_polygon(center_radius, edge_num, length, rH)
+  centerHoleLower = create_polygon(center_radius, edge_num, length)
   
-  print("Condense vertices into a single list")
-  outer = outerEdgeUpper + outerEdgeLower
-  outerGroove = outerGrooveEdgeUpper
-  center = centerHoleUpper + centerHoleLower
-  spacing = spacingUpper
-  lst = outer + outerGroove + center + spacing
+  outerEdgeUpper = create_polygon(radius, edge_num, length, rH)
+  outerEdgeLower = create_polygon(radius, edge_num, length)
 
-  print("Add vertices to shape")
-  recordShape.add_vertices(lst)
+  if (info):
+    print("Add vertices to shape")
+  recordShape.add_vertices(outerEdgeUpper + outerEdgeLower)
+  recordShape.add_vertices(outerGrooveEdgeUpper)
+  recordShape.add_vertices(spacingUpper)
+  recordShape.add_vertices(centerHoleUpper + centerHoleLower)
 
   #Set faces
-  print("Constructing faces")
+  if (info):
+    print("Constructing faces")
   recordShape.tristrip(outerEdgeUpper, outerGrooveEdgeUpper)
   recordShape.tristrip(centerHoleUpper, spacingUpper)
   
-  print("Construct center hole")
-  centerHoleUpper = list(setzpos(polygon_generator(innerHole / 2, edge_num), rH))
-  centerHoleLower = list(setzpos(polygon_generator(innerHole / 2, edge_num)))
+  if (info):
+    print("Construct center hole")
   centerHoleUpper += [centerHoleUpper[0]]
   centerHoleLower += [centerHoleLower[0]]
+  recordShape.add_vertices(centerHoleUpper);
+  recordShape.add_vertices(centerHoleLower);
   recordShape.tristrip(centerHoleUpper, centerHoleLower)
   centerHoleUpper.reverse()
   centerHoleLower.reverse()
   recordShape.tristrip(centerHoleUpper, centerHoleLower)
   
-  print("Construct outer perimeter vertical")
-  outerEdgeUpper = list(setzpos(polygon_generator(radius, edge_num), rH))
-  outerEdgeLower = list(setzpos(polygon_generator(radius, edge_num)))
+  if (info):
+    print("Construct outer perimeter vertical")
+  outerEdgeUpper = create_polygon(radius, edge_num, length, rH)
+  outerEdgeLower = create_polygon(radius, edge_num, length)
   outerEdgeUpper += [outerEdgeUpper[0]]
   outerEdgeLower += [outerEdgeLower[0]]
   recordShape.tristrip(outerEdgeUpper, outerEdgeLower)
@@ -100,24 +103,42 @@ def calculate_record_shape(recordShape = _3DShape()) -> mesh.Mesh:
   outerEdgeLower.reverse()
   recordShape.tristrip(outerEdgeUpper, outerEdgeLower)
 
-  print("Construct base")
+  if (info):
+    print("Construct base")
+  outerEdgeLower = create_polygon(radius, edge_num, length)
+  centerHoleLower = create_polygon(center_radius, edge_num, length)
+  outerEdgeLower += [outerEdgeLower[0]]
+  centerHoleLower += [centerHoleLower[0]]
   recordShape.tristrip(outerEdgeLower, centerHoleLower)
   centerHoleLower.reverse()
   outerEdgeLower.reverse()
   recordShape.tristrip(outerEdgeLower, centerHoleLower)
   
-  print("Construct top")
+  if (info):
+    print("Construct top")
   baseline = rH - 0.05
-  outerEdgeMiddle = list(setzpos(polygon_generator(radius, edge_num), baseline))
-  centerHoleMiddle = list(setzpos(polygon_generator(innerHole / 2, edge_num), baseline))
+  outerEdgeMiddle = create_polygon(radius, edge_num, length, baseline)
+  centerHoleMiddle =  create_polygon(center_radius, edge_num, length, baseline)
+  recordShape.add_vertices(outerEdgeMiddle + centerHoleMiddle)
   outerEdgeMiddle += [outerEdgeMiddle[0]]
   centerHoleMiddle += [centerHoleMiddle[0]]
-  recordShape.add_vertices(outerEdgeMiddle + centerHoleMiddle)
-
   recordShape.tristrip(outerEdgeMiddle, centerHoleMiddle)
   outerEdgeMiddle.reverse()
   centerHoleMiddle.reverse()
   recordShape.tristrip(outerEdgeMiddle, centerHoleMiddle)
+
+  
+  if (info):
+    print("Construct outer edge")
+  outerGrooveEdgeUpper = create_polygon(outerRad + 10, groove_edge_num, length, rH)
+  outerEdgeMiddle = create_polygon(radius, edge_num, length, baseline)
+  outerGrooveEdgeUpper += [outerGrooveEdgeUpper[0]]
+  outerEdgeMiddle += [outerEdgeMiddle[0]]
+  recordShape.tristrip(outerEdgeMiddle, outerGrooveEdgeUpper)
+  outerEdgeMiddle.reverse()
+  outerGrooveEdgeUpper.reverse()
+  recordShape.tristrip(outerEdgeMiddle, outerGrooveEdgeUpper)
+
   
   return recordShape
 

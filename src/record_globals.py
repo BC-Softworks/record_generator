@@ -2,6 +2,7 @@ from bidict import bidict
 import numpy as np
 from math import pi
 from collections import OrderedDict
+from itertools import permutations
 
 # https://pypi.org/project/numpy-stl/
 from stl import mesh
@@ -18,8 +19,8 @@ downsampling = 8 # 2.9696 optimal
 thetaIter = truncate((60 * samplingRate) / (downsampling * rpm), precision)
 diameter = 170 # diameter of record in mm
 radius = diameter // 2 # radius of record mm
-outerRad = truncate(70, precision) # truncate(170, precision)  # radius of outermost groove in mm
-innerRad = truncate(28, precision) # radius of innermost groove in mm
+outerRad = truncate(75, precision) # truncate(170, precision)  # radius of outermost groove in mm
+innerRad = truncate(25, precision) # radius of innermost groove in mm
 innerHole = 38.2524 # For 33 1/3 rpm 0.286 inch # diameter of center hole in mm
 rH = truncate(5, precision)
 micronsPerLayer = 16 # microns per vertical print layer
@@ -54,10 +55,15 @@ class _3DShape():
     def add_vertices(self, lst):
       for vertex in lst:
           self.add_vertex(vertex)
-
+          
+          
+    # It is faster to add all the faces and remove duplicates at the end
+    # then to check after every add
     def add_face(self, point_a, point_b, point_c):
         points = [point_a, point_b, point_c]
-        self.faces.append(tuple([self.vertices.inverse[x] for x in points]))
+        tup = tuple([self.vertices.inverse[x] for x in points])
+        
+        self.faces.append(tup)
     
     def get_vertices(self):
         lst = [self.vertices[i] for i in range(0, len(self.vertices) )]
@@ -74,7 +80,6 @@ class _3DShape():
     def remove_duplicate_faces(self):
         self.faces = list(OrderedDict.fromkeys(self.faces))
         
-
     def shape_to_mesh(shape) -> mesh.Mesh:
       faces = shape.get_faces()
       vertices = shape.get_vertices()

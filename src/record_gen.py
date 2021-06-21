@@ -17,7 +17,7 @@ from record_globals import precision, tau, samplingRate,rpm, downsampling, theta
 from record_globals import radius, innerHole, innerRad, outerRad, rH, amplitude, depth, bevel, gW, incrNum
 from record_globals import truncate, _3DShape
 
-from basic_shape_gen import setzpos, circumference_generator
+from basic_shape_gen import setzpos, circumference_generator, calculate_record_shape
 
 # horizontial_modulation
 def hm(x, y, gH):
@@ -147,15 +147,11 @@ def main(filename, stlname):
   m = pow(max(lst), 2)
   normalizedDepth = [truncate(x / m, precision) for x in lst]
 
-  print("Import record shape")
-  shapefile = open("pickle/{}_shape.p".format(rpm), 'rb')
-  recordShape = pickle.load(shapefile)
-  shapefile.close()
-  
-  # draw_spiral(normalizedDepth, outerRad, info = False).shape_to_mesh().save("stl/spiral.stl", mode=stl.Mode.BINARY)
-  
+  print("Generate record shape")
+  recordShape = calculate_record_shape(info = False)
+
   print("Drawing spiral object")
-  shape = draw_spiral(normalizedDepth, outerRad, recordShape, info = False)
+  shape = draw_spiral(normalizedDepth, outerRad, recordShape)
   print("Removing duplicate faces from shape spiral object")
   shape.remove_duplicate_faces()
   print("Vertices: " + str(len(shape.get_vertices())))
