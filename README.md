@@ -1,6 +1,9 @@
 # Record Generator
 
-Converts wave files to stl of 45 rpm record.
+Converts wave and aifc files to an STL file of a properly encoded of 45 rpm record.
+As of v0.2 record shape is configurable.
+An updated project summary and walkthrough is to be included in v0.3 in the info folder.
+A PySwip based translater from STL to AMF is expected to be added by v0.4.
 
 ## Depndencies
 
@@ -8,10 +11,15 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install depende
 
 ```bash
 pip install -r requirements.txt 
+```
+
+## Setup
+Two folders need created before running the program.
+This bug should be fixed by v0.4 at the latest.
+```
 mkdir pickle
 mkdir stl
 ```
-
 ## Usage
 
 Add audio file, wav, wave, aifc or aiff, to audio folder then run
