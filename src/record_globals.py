@@ -6,6 +6,7 @@ from itertools import permutations
 
 # https://pypi.org/project/numpy-stl/
 from stl import mesh
+from stl import RemoveDuplicates
 
 def truncate(n, decimals=0):
     multiplier = 10 ** decimals
@@ -62,7 +63,6 @@ class _3DShape():
     def add_face(self, point_a, point_b, point_c):
         points = [point_a, point_b, point_c]
         tup = tuple([self.vertices.inverse[x] for x in points])
-        
         self.faces.append(tup)
     
     def get_vertices(self):
@@ -83,7 +83,7 @@ class _3DShape():
     def shape_to_mesh(shape) -> mesh.Mesh:
       faces = shape.get_faces()
       vertices = shape.get_vertices()
-      rec = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
+      rec = mesh.Mesh(data=np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype), speedups=True)
       for i, f in enumerate(faces):
         for j in range(3):
           rec.vectors[i][j] = vertices[f[j],:]

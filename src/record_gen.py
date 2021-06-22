@@ -17,7 +17,7 @@ from record_globals import precision, tau, samplingRate,rpm, downsampling, theta
 from record_globals import radius, innerHole, innerRad, outerRad, rH, amplitude, depth, bevel, gW, incrNum
 from record_globals import truncate, _3DShape
 
-from basic_shape_gen import setzpos, circumference_generator, calculate_record_shape
+from basic_shape_gen import setzpos, create_polygon, calculate_record_shape
 
 # horizontial_modulation
 def hm(x, y, gH):
@@ -129,8 +129,8 @@ def draw_spiral(audio_array, r, shape = _3DShape(), info = True):
   shape.tristrip(stop1, stop3)
 
   #Close remaining space between last groove and center hole
-  remainingSpace = list(setzpos(circumference_generator(0, innerRad), rH))
-  edgeOfGroove = list(setzpos(circumference_generator(0, r), rH))
+  remainingSpace = create_polygon(innerRad, 8, rH)
+  edgeOfGroove = create_polygon(r, 8, rH)
   shape.add_vertices(remainingSpace + edgeOfGroove)
   shape.tristrip(remainingSpace, edgeOfGroove)
 
@@ -154,10 +154,10 @@ def main(filename, stlname):
   shape = draw_spiral(normalizedDepth, outerRad, recordShape)
   print("Removing duplicate faces from shape spiral object")
   shape.remove_duplicate_faces()
-  print("Vertices: " + str(len(shape.get_vertices())))
-  print("Faces: " + str(len(shape.get_faces())))
   print("Converting shape to mesh object")
   full_mesh = shape.shape_to_mesh()
+  print("Vertices: " + str(len(shape.get_vertices())))
+  print("Faces: " + str(len(shape.get_faces())))
   print("Saving mesh to " + "stl/" + stlname + ".stl")
   full_mesh.save("stl/" + stlname + ".stl", mode=stl.Mode.BINARY)
 
@@ -165,7 +165,7 @@ def main(filename, stlname):
 if __name__ == '__main__':
   m1 = memory_profiler.memory_usage()
   t1 = time.process_time()
-  main("audio/sample.csv", "Sample_engraved")
+  main("audio/sample.csv", "sample_engraved")
   t2 = time.process_time()
   m2 = memory_profiler.memory_usage()
   time_diff = t2 - t1
