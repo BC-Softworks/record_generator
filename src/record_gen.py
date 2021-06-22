@@ -124,7 +124,7 @@ def draw_spiral(audio_array, r, shape = _3DShape(), info = True):
   shape.tristrip(stop1,stop2)
 
   #Fill in around cap
-  stop3 = [lastEdge[-1], (r+innerRad, r, rH)]
+  stop3 = [lastEdge[-1], (innerRad, r, rH)]
   shape.add_vertex(stop3[1])
   shape.tristrip(stop1, stop3)
 
@@ -132,6 +132,8 @@ def draw_spiral(audio_array, r, shape = _3DShape(), info = True):
   remainingSpace = create_polygon(innerRad, 8, rH)
   edgeOfGroove = create_polygon(r, 8, rH)
   shape.add_vertices(remainingSpace + edgeOfGroove)
+  remainingSpace.append(remainingSpace[0])
+  edgeOfGroove.append(edgeOfGroove[0])
   shape.tristrip(remainingSpace, edgeOfGroove)
 
   return shape
@@ -149,15 +151,16 @@ def main(filename, stlname):
 
   print("Generate record shape")
   recordShape = calculate_record_shape(info = False)
-
   print("Drawing spiral object")
   shape = draw_spiral(normalizedDepth, outerRad, recordShape)
   print("Removing duplicate faces from shape spiral object")
   shape.remove_duplicate_faces()
+  print("Removing empty faces from shape spiral object")
+  shape.remove_empty_faces()
   print("Converting shape to mesh object")
   full_mesh = shape.shape_to_mesh()
-  print("Vertices: " + str(len(shape.get_vertices())))
-  print("Faces: " + str(len(shape.get_faces())))
+  print("# of vertices: " + str(len(shape.get_vertices())))
+  print("# of faces: " + str(len(shape.get_faces())))
   print("Saving mesh to " + "stl/" + stlname + ".stl")
   full_mesh.save("stl/" + stlname + ".stl", mode=stl.Mode.BINARY)
 

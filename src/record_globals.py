@@ -2,7 +2,7 @@ from bidict import bidict
 import numpy as np
 from math import pi
 from collections import OrderedDict
-from itertools import permutations
+from collections import namedtuple
 
 # https://pypi.org/project/numpy-stl/
 from stl import mesh
@@ -35,8 +35,8 @@ incrNum = truncate(tau / thetaIter, precision) # calculcate angular incrementati
 radIncr = truncate((gW + 2 * bevel * amplitude) / thetaIter, precision)  # calculate radial incrementation amount
 rateDivisor = 4.0 # Not sure what this should be yet
 
-
-class _3DShape():
+Vertex = namedtuple('Vertex', 'x y z')
+class _3DShape():    
     def __init__(self, dict={}):
         self.vertices = bidict(dict)
         self.faces = []
@@ -48,22 +48,21 @@ class _3DShape():
         assert len(xyz) == 3
         index = len(self.vertices)
         if xyz not in self.vertices.inverse: 
-            self.vertices[index] = xyz
+            self.vertices[index] = Vertex(*xyz)
             return index
         else:
             return -1 
     
     def add_vertices(self, lst):
-      for vertex in lst:
-          self.add_vertex(vertex)
-          
-          
+      for v in lst:
+          self.add_vertex(Vertex(*v))
+
     # It is faster to add all the faces and remove duplicates at the end
     # then to check after every add
     def add_face(self, point_a, point_b, point_c):
         points = [point_a, point_b, point_c]
-        tup = tuple([self.vertices.inverse[x] for x in points])
-        self.faces.append(tup)
+        v = Vertex(*[self.vertices.inverse[x] for x in points])
+        self.faces.append(v)
     
     def get_vertices(self):
         lst = [self.vertices[i] for i in range(0, len(self.vertices) )]
@@ -73,13 +72,17 @@ class _3DShape():
         return np.array(self.faces)
 
     def tristrip(self, a, b):
-        for i in range(0, min(len(a), len(b)) - 1):
+        l = min(len(a), len(b)) - 1
+        for i in range(0, l):
             self.add_face(a[i], a[i+1], b[i])
-            self.add_face(b[i], b[i+1], a[i])
+            self.add_face(b[i], b[i+1], a[i+1])
 
     def remove_duplicate_faces(self):
         self.faces = list(OrderedDict.fromkeys(self.faces))
-        
+    
+    def remove_empty_faces(self):
+        self.faces = list(filter(lambda f: f[0] != f[1] and f[0] != f[2], self.faces))
+    
     def shape_to_mesh(shape) -> mesh.Mesh:
       faces = shape.get_faces()
       vertices = shape.get_vertices()
