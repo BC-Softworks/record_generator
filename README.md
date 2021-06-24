@@ -13,13 +13,6 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install depende
 pip install -r requirements.txt 
 ```
 
-## Setup
-Two folders need created before running the program.
-This bug should be fixed by v0.4 at the latest.
-```
-mkdir pickle
-mkdir stl
-```
 ## Usage
 
 Add audio file, wav, wave, aifc or aiff, to audio folder then run
