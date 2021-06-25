@@ -3,7 +3,6 @@
 Converts wave and aifc files to an STL file of a properly encoded of 45 rpm record.
 As of v0.2 record shape is configurable.
 An updated project summary and walkthrough is to be included in v0.3 in the info folder.
-A PySwip based translater from STL to AMF is expected to be added by v0.4.
 
 ## Depndencies
 
