@@ -13,50 +13,57 @@ from stl import mesh
 import memory_profiler
 import time
 
-from record_globals import precision, tau, samplingRate,rpm, downsampling, thetaIter, diameter, radIncr, rateDivisor
-from record_globals import radius, innerHole, innerRad, outerRad, rH, amplitude, depth, bevel, gW, incrNum
-from record_globals import truncate, _3DShape
+from record_globals import *
 
 from basic_shape_gen import setzpos, create_polygon, calculate_record_shape
 
-# horizontial_modulation
-def hm(x, y, gH):
-  v0, v1 = radius - x,  radius - y
-  m = sqrt(pow(v0, 2) + pow(v1, 2))
-  h = (gH * (v0 / m), gH * (v1 / m), 0)
-  return h
-
 #Outer Upper vertex
-def ou(r, a, b, theta, rH, gH) -> tuple:
+def ou(r, a, b, theta, rH) -> tuple:
   w = r + a * b
-  x, y = w * cos(theta), w * sin(theta)
-  v, h = (x, y, rH), hm(x, y, gH)
-  return h[0] + v[0], h[1] + v[1], rH
+  return Vertex(w * cos(theta), w * sin(theta), rH)
 
 #Inner Upper vertex
-def iu(r, a, b, theta, rH, gH) -> tuple:
-  w = r - gW - a * b
-  x, y = w * cos(theta), w * sin(theta)
-  v, h = (x, y, rH), hm(x, y, gH)
-  return h[0] + v[0], h[1] + v[1], rH
-  
+def iu(r, a, b, theta, rH) -> tuple:
+  w = r - grooveWidth - a * b
+  return Vertex(w * cos(theta), w * sin(theta), rH)
+
 #Outer Lower vertex
 def ol(r, theta, gH) -> tuple:
-  x, y = r * cos(theta), r * sin(theta)
-  v, h = (x, y, gH), hm(x, y, gH)
-  return h[0] + v[0], h[1] + v[1], rH - 0.05
+  return Vertex(r * cos(theta), r * sin(theta), gH)
 
 #Inner Lower vertex
 def il(r, theta, gH) -> tuple:
-  w = r - gW
-  x, y = r * cos(theta), r * sin(theta)
-  v, h = (x, y, gH), hm(x, y, gH)
-  return h[0] + v[0], h[1] + v[1], rH - 0.05
+  w = r - grooveWidth
+  return Vertex(w * cos(theta), w * sin(theta), gH)
 
 
 def grooveHeight(audio_array, samplenum):
   baseline = rH-depth-amplitude
   return truncate(baseline*audio_array[int(rateDivisor*samplenum)]/2, precision)
+
+def draw_groove_cap(lastEdge, shape):
+  stop1 = [ou(r, amplitude, bevel, 0, rH, gH), iu(r, amplitude, bevel, 0, rH, gH)]
+  stop2 = [ol(r, 0, gH), il(r, 0, gH)]
+  shape.add_vertices(stop1 + stop2)
+
+  #Draw triangles
+  shape.tristrip(stop1,stop2)
+
+  #Fill in around cap
+  stop3 = [lastEdge[-1], (innerRad, r, rH)]
+  shape.add_vertex(stop3[1])
+  shape.tristrip(stop1, stop3)
+  
+  return shape
+
+def fill_remaining_area(r, shape):
+  remainingSpace = create_polygon(innerRad, 8, rH)
+  edgeOfGroove = create_polygon(r, 8, rH)
+  shape.add_vertices(remainingSpace + edgeOfGroove)
+  remainingSpace.append(remainingSpace[0])
+  edgeOfGroove.append(edgeOfGroove[0])
+  shape.tristrip(remainingSpace, edgeOfGroove)
+  return shape
 
 # r is the radial postion of the vertex beign drawn
 def draw_spiral(audio_array, r, shape = _3DShape(), info = True):
@@ -93,48 +100,25 @@ def draw_spiral(audio_array, r, shape = _3DShape(), info = True):
       inner = grooveInnerUpper + grooveInnerLower
       shape.add_vertices(outer + inner)
 
-      lastEdge = grooveOuterUpper if index == 0 else inner
-
       if index == 0:
           #Draw triangle to close outer part of record
-          shape.tristrip(lastEdge, grooveOuterUpper)
           shape.tristrip(grooveOuterUpper, grooveOuterLower)
-          
-          #Complete beginning cap if necessary
-          s1 = [ou(r, amplitude, bevel, theta, rH, gH), iu(r, amplitude, bevel, theta, rH, gH)]
-          shape.add_vertices(s1)
-          shape.tristrip(s1,s1)
       else:
-          shape.tristrip(lastEdge, grooveOuterLower)
+          shape.tristrip(grooveInnerUpper, grooveOuterLower)
       
       shape.tristrip(grooveOuterLower, grooveInnerLower)
       shape.tristrip(grooveInnerLower, grooveInnerUpper)
+      lastEdge = grooveInnerUpper
 
       index += 1
       if(info):
           print("Groove drawn: {}".format(index))
       
   # Draw groove cap
-  stop1 = [ou(r, amplitude, bevel, 0, rH, gH), iu(r, amplitude, bevel, 0, rH, gH)]
-  stop2 = [ol(r, 0, gH), il(r, 0, gH)]
-  cap = stop1 + stop2
-  shape.add_vertices(cap)
-
-  #Draw triangles
-  shape.tristrip(stop1,stop2)
-
-  #Fill in around cap
-  stop3 = [lastEdge[-1], (innerRad, r, rH)]
-  shape.add_vertex(stop3[1])
-  shape.tristrip(stop1, stop3)
+  shape = draw_groove_cap(lastEdge, shape)
 
   #Close remaining space between last groove and center hole
-  remainingSpace = create_polygon(innerRad, 8, rH)
-  edgeOfGroove = create_polygon(r, 8, rH)
-  shape.add_vertices(remainingSpace + edgeOfGroove)
-  remainingSpace.append(remainingSpace[0])
-  edgeOfGroove.append(edgeOfGroove[0])
-  shape.tristrip(remainingSpace, edgeOfGroove)
+  shape = fill_remaining_area(r, shape)
 
   return shape
 
