@@ -13,9 +13,8 @@ import memory_profiler
 import time
 
 # Global variables
-from record_globals import precision, tau, rpm, depth, incrNum, amplitude
-from record_globals import radius, innerHole, innerRad, outerRad, rH
-from record_globals import truncate, _3DShape
+import record_globals as rg
+from record_globals import *
 
 # Generate circumference of cylinder
 def circumference_generator(t, r, i = incrNum):
@@ -43,14 +42,14 @@ def add_polygon_edges(a, b, shape):
   return shape
   
 # Combine the vectors in to an outer and inner circle
-def calculate_record_shape(recordShape = _3DShape(), info = True) -> mesh.Mesh:
+def calculate_record_shape(recordShape = rg._3DShape(), info = True) -> mesh.Mesh:
   edge_num = 8
   baseline = rH - 0.05
     
   outerEdgeUpper = create_polygon(radius, edge_num, rH)
   outerEdgeLower = create_polygon(radius, edge_num)
 
-  outerLipRad = outerRad + 2.5
+  outerLipRad = outerRad + 7
   outerSpacerUpper = create_polygon(outerLipRad, edge_num, rH)
   outerSpacerMiddle = create_polygon(outerLipRad, edge_num, baseline)
   outerSpacerLower = create_polygon(outerLipRad, edge_num, baseline)

@@ -1,39 +1,54 @@
 from bidict import bidict
 import numpy as np
 from math import pi
-from collections import OrderedDict
-from collections import namedtuple
+import configparser
+from collections import OrderedDict, namedtuple
 
 # https://pypi.org/project/numpy-stl/
 from stl import mesh
 from stl import RemoveDuplicates
 
+
+
 def truncate(n, decimals=0):
     multiplier = 10 ** decimals
     return int(n * multiplier) / multiplier
 
+# Set 2pi
 precision = 5
 tau = truncate(2 * pi, precision)
-samplingRate = 44100 # 44.1khz audio
-rpm = 45
-downsampling = 8 # 2.9696 optimal
+
+# Set global variable from constants file
+config = configparser.ConfigParser()
+config.read('record_constants.ini')
+
+# Audio setting
+samplingRate = int(config['Audio']['samplingRate'])
+rpm = int(config['Audio']['rpm'])
+downsampling = int(config['Audio']['downsampling'])
+
+# Record dimensions
+diameter = float(config['Record Dimensions']['diameter'])
+radius = float(config['Record Dimensions']['radius'])
+outerRad = float(config['Record Dimensions']['outerRad'])
+innerRad = float(config['Record Dimensions']['innerRad'])
+innerHole = float(config['Record Dimensions']['innerHole'])
+rH = int(config['Record Dimensions']['recordHeight'])
+
+# Groove dimensions
+micronsPerLayer =  config['Groove Dimensions'].getfloat('micronsPerLayer')
+bevel = config['Groove Dimensions'].getfloat('bevel')
+gW = config['Groove Dimensions'].getfloat('grooveWidth')
+rateDivisor = int(config['Groove Dimensions']['rateDivisor'])
+
+
 thetaIter = truncate((60 * samplingRate) / (downsampling * rpm), precision)
-diameter = 170 # diameter of record in mm
-radius = diameter // 2 # radius of record mm
-outerRad = truncate(75, precision) # truncate(170, precision)  # radius of outermost groove in mm
-innerRad = truncate(25, precision) # radius of innermost groove in mm
-innerHole = 38.2524 # For 33 1/3 rpm 0.286 inch # diameter of center hole in mm
-rH = truncate(5, precision)
-micronsPerLayer = 16 # microns per vertical print layer
 # 24 is the amplitude of signal (in 16 micron steps)
 amplitude = truncate((24 * micronsPerLayer) / 1000, precision)
 # 6 is the measured in 16 microns steps, depth of tops of wave in groove from uppermost surface of record
 depth = truncate((6 * micronsPerLayer) / 1000, precision)
-bevel = 0.5 # bevelled groove edge
-gW = truncate(0.05588, precision) # in 600dpi pixels grooveWidth
 incrNum = truncate(tau / thetaIter, precision) # calculcate angular incrementation amount
 radIncr = truncate((gW + 2 * bevel * amplitude) / thetaIter, precision)  # calculate radial incrementation amount
-rateDivisor = 4.0 # Not sure what this should be yet
 
 Vertex = namedtuple('Vertex', 'x y z')
 class _3DShape():    
