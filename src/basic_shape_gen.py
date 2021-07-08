@@ -44,7 +44,7 @@ def add_polygon_edges(a, b, shape):
 # Combine the vectors in to an outer and inner circle
 def calculate_record_shape(recordShape = rg._3DShape(), info = True) -> mesh.Mesh:
   edge_num = 8
-  baseline = rH - 0.05
+  baseline = rH - 0.5
     
   outerEdgeUpper = create_polygon(radius, edge_num, rH)
   outerEdgeLower = create_polygon(radius, edge_num)
@@ -52,7 +52,7 @@ def calculate_record_shape(recordShape = rg._3DShape(), info = True) -> mesh.Mes
   outerLipRad = outerRad + 7
   outerSpacerUpper = create_polygon(outerLipRad, edge_num, rH)
   outerSpacerMiddle = create_polygon(outerLipRad, edge_num, baseline)
-  outerSpacerLower = create_polygon(outerLipRad, edge_num, baseline)
+  outerSpacerLower = create_polygon(outerLipRad, edge_num)
 
 
   innerSpacerUpper = create_polygon(innerRad, edge_num, rH)
@@ -60,6 +60,7 @@ def calculate_record_shape(recordShape = rg._3DShape(), info = True) -> mesh.Mes
 
   center_radius = innerHole / 2
   centerHoleUpper = create_polygon(center_radius, edge_num, rH)
+  centerHoleMiddle = create_polygon(center_radius, edge_num, baseline)
   centerHoleLower = create_polygon(center_radius, edge_num)
 
   if (info):
@@ -68,7 +69,7 @@ def calculate_record_shape(recordShape = rg._3DShape(), info = True) -> mesh.Mes
   recordShape.add_vertices(outerEdgeUpper + outerEdgeLower)
   recordShape.add_vertices(outerSpacerUpper + outerSpacerMiddle + outerSpacerLower)
   recordShape.add_vertices(innerSpacerUpper + innerSpacerMiddle)
-  recordShape.add_vertices(centerHoleUpper + centerHoleLower)
+  recordShape.add_vertices(centerHoleUpper + centerHoleMiddle + centerHoleLower)
   if (info):
     vertices = recordShape.get_vertices()
     print("Number of vertices: " + str(len(vertices)))
@@ -87,7 +88,8 @@ def calculate_record_shape(recordShape = rg._3DShape(), info = True) -> mesh.Mes
 
   recordShape = add_polygon_edges(outerEdgeUpper, outerSpacerUpper, recordShape)
   recordShape = add_polygon_edges(innerSpacerUpper, centerHoleUpper, recordShape)
-  recordShape = add_polygon_edges(outerSpacerMiddle, innerSpacerMiddle, recordShape)
+  #recordShape = add_polygon_edges(outerSpacerMiddle, innerSpacerMiddle, recordShape)
+  recordShape = add_polygon_edges(innerSpacerMiddle, centerHoleMiddle, recordShape)
   recordShape = add_polygon_edges(outerEdgeLower, centerHoleLower, recordShape)
 
   if (info):
