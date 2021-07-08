@@ -85,7 +85,7 @@ class _3DShape():
     
     def get_faces(self):
         return np.array(self.faces)
-
+    
     def tristrip(self, a, b):
         l = min(len(a), len(b)) - 1
         for i in range(0, l):
@@ -98,11 +98,10 @@ class _3DShape():
     def remove_empty_faces(self):
         self.faces = list(filter(lambda f: f[0] != f[1] and f[0] != f[2], self.faces))
     
-    def shape_to_mesh(shape) -> mesh.Mesh:
-      faces = shape.get_faces()
-      vertices = shape.get_vertices()
-      rec = mesh.Mesh(data=np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype), speedups=True)
-      for i, f in enumerate(faces):
+    def shape_to_mesh(self) -> mesh.Mesh:
+      vertices = self.get_vertices()
+      rec = mesh.Mesh(data=np.zeros(self.get_faces().shape[0], dtype=mesh.Mesh.dtype), speedups=True)
+      for f in range(len(self.faces)):
         for j in range(3):
-          rec.vectors[i][j] = vertices[f[j],:]
+          rec.vectors[f][j] = vertices[self.faces[f][j],:]
       return rec

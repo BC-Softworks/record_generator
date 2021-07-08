@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import pickle
 import numpy as np
 from math import cos, pow, sin, sqrt
 import csv
@@ -13,6 +12,7 @@ from stl import mesh
 import memory_profiler
 import time
 
+import record_globals as rg
 from record_globals import *
 
 from basic_shape_gen import setzpos, create_polygon, calculate_record_shape
@@ -24,7 +24,7 @@ def ou(r, a, b, theta, rH) -> tuple:
 
 #Inner Upper vertex
 def iu(r, a, b, theta, rH) -> tuple:
-  w = r - grooveWidth - a * b
+  w = r - gW - a * b
   return Vertex(w * cos(theta), w * sin(theta), rH)
 
 #Outer Lower vertex
@@ -33,16 +33,16 @@ def ol(r, theta, gH) -> tuple:
 
 #Inner Lower vertex
 def il(r, theta, gH) -> tuple:
-  w = r - grooveWidth
+  w = r - gW
   return Vertex(w * cos(theta), w * sin(theta), gH)
 
 
 def grooveHeight(audio_array, samplenum):
   baseline = rH-depth-amplitude
-  return truncate(baseline*audio_array[int(rateDivisor*samplenum)]/2, precision)
+  return truncate(baseline*audio_array[int(rateDivisor*samplenum)], precision)
 
-def draw_groove_cap(lastEdge, shape):
-  stop1 = [ou(r, amplitude, bevel, 0, rH, gH), iu(r, amplitude, bevel, 0, rH, gH)]
+def draw_groove_cap(lastEdge, r, gH, shape):
+  stop1 = [ou(r, amplitude, bevel, 0, rH), iu(r, amplitude, bevel, 0, rH)]
   stop2 = [ol(r, 0, gH), il(r, 0, gH)]
   shape.add_vertices(stop1 + stop2)
 
@@ -66,14 +66,14 @@ def fill_remaining_area(r, shape):
   return shape
 
 # r is the radial postion of the vertex beign drawn
-def draw_spiral(audio_array, r, shape = _3DShape(), info = True):
+def draw_spiral(audio_array, r, shape = rg._3DShape(), info = True):
 
   #Inner while for groove position
   lastEdge = None
   index = samplenum = 0
   gH = grooveHeight(audio_array, samplenum)
 
-  s1 = [ou(radius, amplitude, bevel, 0, rH, gH), iu(radius, amplitude, bevel, 0, rH, gH)]
+  s1 = [ou(radius, amplitude, bevel, 0, rH), iu(radius, amplitude, bevel, 0, rH)]
   s2 = [ol(radius, 0, gH), il(radius, 0, gH)]
   shape.add_vertices(s1 + s2)
   shape.tristrip(s1, s2)
@@ -87,8 +87,8 @@ def draw_spiral(audio_array, r, shape = _3DShape(), info = True):
       while theta < tau:
           gH = grooveHeight(audio_array, samplenum)
           if index == 0:
-              grooveOuterUpper.append(ou(r, amplitude, bevel, theta, rH, gH))
-          grooveOuterLower.append(iu(r, amplitude, bevel, theta, rH, gH))
+              grooveOuterUpper.append(ou(r, amplitude, bevel, theta, rH))
+          grooveOuterLower.append(iu(r, amplitude, bevel, theta, rH))
           grooveInnerUpper.append(ol(r, theta, gH))
           grooveInnerLower.append(il(r, theta, gH))
           r -= radIncr
@@ -115,7 +115,8 @@ def draw_spiral(audio_array, r, shape = _3DShape(), info = True):
           print("Groove drawn: {}".format(index))
       
   # Draw groove cap
-  shape = draw_groove_cap(lastEdge, shape)
+  gH = grooveHeight(audio_array, samplenum)
+  shape = draw_groove_cap(lastEdge, r, gH, shape)
 
   #Close remaining space between last groove and center hole
   shape = fill_remaining_area(r, shape)
@@ -130,9 +131,11 @@ def main(filename, stlname):
   lst = [float(x) for x in lst if x != '']
 
   # Normalize the values
-  m = pow(max(lst), 2)
+  m = max(lst)
+  lst = [truncate(abs(x) + m, precision) for x in lst]
+  m *= 4
   normalizedDepth = [truncate(x / m, precision) for x in lst]
-
+  
   print("Generate record shape")
   recordShape = calculate_record_shape(info = False)
   print("Drawing spiral object")
@@ -143,8 +146,6 @@ def main(filename, stlname):
   shape.remove_empty_faces()
   print("Converting shape to mesh object")
   full_mesh = shape.shape_to_mesh()
-  print("# of vertices: " + str(len(shape.get_vertices())))
-  print("# of faces: " + str(len(shape.get_faces())))
   print("Saving mesh to " + "stl/" + stlname + ".stl")
   full_mesh.save("stl/" + stlname + ".stl", mode=stl.Mode.BINARY)
 
