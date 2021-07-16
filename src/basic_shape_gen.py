@@ -1,124 +1,123 @@
 #!/usr/bin/python3
 
-import numpy as np
+
 import os
-from math import cos, sin, sqrt, pow
+from math import cos, sin
+import time
+import memory_profiler
 
 # https://pypi.org/project/numpy-stl/
-import stl
 from stl import mesh
-
-# Performance mesuring
-import memory_profiler
-import time
 
 # Global variables
 import record_globals as rg
-from record_globals import *
 
-# Generate circumference of cylinder
-def circumference_generator(t, r, i = incrNum):
-  while t < tau:
-    yield r * sin(t), r * cos(t)
-    t += i
 
-# Generate perimeter of polygon
-def polygon_generator(r, e):
-  return circumference_generator(0, r, tau / e)
+def circumference_generator(theta, rad, incr=rg.incrNum):
+    """Generate circumference of cylinder"""
+    while theta < rg.tau:
+        yield rad * sin(theta), rad * cos(theta)
+        theta += incr
 
-#Add z position to each vector of x and y
-def setzpos(arr, h=0) -> tuple:
-  for lst in arr:
-      yield(lst[0], lst[1], h)
-      
-def create_polygon(r, n, h=0):
-  lst = list(polygon_generator(r, n))
-  return list(setzpos(lst, h))
-  
-def add_polygon_edges(a, b, shape):
-  a.append(a[0])
-  b.append(b[0])
-  shape.tristrip(a, b)
-  return shape
-  
-# Combine the vectors in to an outer and inner circle
-def calculate_record_shape(recordShape = rg._3DShape(), info = True) -> mesh.Mesh:
-  edge_num = 8
-  baseline = rH - 0.5
+def polygon_generator(rad, edge_num):
+    """Generate perimeter of polygon"""
+    return circumference_generator(0, rad, incr=rg.tau / edge_num)
+
+
+def setzpos(arr, height=0) -> tuple:
+    """ Add z position to each vector of x and y """
+    for lst in arr:
+        yield(lst[0], lst[1], height)
+
+
+def create_polygon(rad, num, height=0):
+    lst = list(polygon_generator(rad, num))
+    return list(setzpos(lst, height))
+
+
+def add_polygon_edges(list_a, list_b, shape):
+    """ tristrip edges of polygon """
+    list_a.append(list_a[0])
+    list_b.append(list_b[0])
+    shape.tristrip(list_a, list_b)
+    return shape
+
+
+def calculate_record_shape(
+        record_shape=rg.TriMesh(),
+        edge_num=32,
+        info=True) -> mesh.Mesh:
+    """ Combine the vectors in to an outer and inner circle """
+    baseline = rg.record_height - 0.5
+
+    outerEdgeUpper = create_polygon(rg.RADIUS, edge_num, rg.record_height)
+    outerEdgeLower = create_polygon(rg.RADIUS, edge_num)
+
+    outerSpacerUpper = create_polygon(rg.outer_rad, edge_num, rg.record_height)
+    outerSpacerMiddle = create_polygon(rg.outer_rad, edge_num, baseline)
+    outerSpacerLower = create_polygon(rg.outer_rad, edge_num)
+
+    innerSpacerUpper = create_polygon(rg.inner_rad, edge_num, rg.record_height)
+    innerSpacerMiddle = create_polygon(rg.inner_rad, edge_num, baseline)
+
+    center_radius = rg.inner_hole / 2
+    centerHoleUpper = create_polygon(center_radius, edge_num, rg.record_height)
+    centerHoleMiddle = create_polygon(center_radius, edge_num, baseline)
+    centerHoleLower = create_polygon(center_radius, edge_num)
+
+    # Adding vertices to the shape
+    record_shape.add_vertices(outerEdgeUpper + outerEdgeLower)
+    outerSpacer = outerSpacerUpper + outerSpacerMiddle + outerSpacerLower
+    record_shape.add_vertices(outerSpacer)
+    record_shape.add_vertices(innerSpacerUpper + innerSpacerMiddle)
+    center = centerHoleUpper + centerHoleMiddle + centerHoleLower
+    record_shape.add_vertices(center)    
+    if info:
+        vertices = record_shape.get_vertices()
+        print("Number of vertices: " + str(len(vertices)))
     
-  outerEdgeUpper = create_polygon(radius, edge_num, rH)
-  outerEdgeLower = create_polygon(radius, edge_num)
+    # Draw vertical faces
+    record_shape = add_polygon_edges(outerEdgeUpper, outerEdgeLower, record_shape)
+    record_shape = add_polygon_edges(outerSpacerUpper,outerSpacerMiddle, record_shape)
+    record_shape = add_polygon_edges(outerSpacerMiddle,outerSpacerLower, record_shape)
+    record_shape = add_polygon_edges(innerSpacerUpper,innerSpacerMiddle, record_shape)
+    record_shape = add_polygon_edges(centerHoleUpper, centerHoleLower, record_shape)
 
-  outerLipRad = outerRad + 7
-  outerSpacerUpper = create_polygon(outerLipRad, edge_num, rH)
-  outerSpacerMiddle = create_polygon(outerLipRad, edge_num, baseline)
-  outerSpacerLower = create_polygon(outerLipRad, edge_num)
+    # Draw horizontial faces
+    record_shape = add_polygon_edges(outerEdgeUpper, outerSpacerUpper, record_shape)
+    record_shape = add_polygon_edges(innerSpacerUpper, centerHoleUpper, record_shape)
+    record_shape = add_polygon_edges(innerSpacerMiddle,centerHoleMiddle, record_shape)
+    record_shape = add_polygon_edges(outerEdgeLower, centerHoleLower, record_shape)
+
+    if info:
+        print("Number of faces: " + str(len(record_shape.get_faces())))
+    return record_shape
 
 
-  innerSpacerUpper = create_polygon(innerRad, edge_num, rH)
-  innerSpacerMiddle = create_polygon(innerRad, edge_num, baseline)
+def main() -> rg.TriMesh:
+    filename = str(rg.RPM) + '_disc.stl'
+    print('Generating blank record.')
+    record_shape = calculate_record_shape()
+    record_shape.remove_duplicate_faces()
+    record_shape.remove_empty_faces()
 
-  center_radius = innerHole / 2
-  centerHoleUpper = create_polygon(center_radius, edge_num, rH)
-  centerHoleMiddle = create_polygon(center_radius, edge_num, baseline)
-  centerHoleLower = create_polygon(center_radius, edge_num)
+    # Save mesh for debugging purposes
+    if not os.path.isdir('stl'):
+        os.mkdir('stl')
+    record_mesh = record_shape.shape_to_mesh()
+    print("Saving file to {}".format(filename))
+    record_mesh.save("stl/" + filename)
 
-  if (info):
-    print("Adding vertices to the shape")
-    
-  recordShape.add_vertices(outerEdgeUpper + outerEdgeLower)
-  recordShape.add_vertices(outerSpacerUpper + outerSpacerMiddle + outerSpacerLower)
-  recordShape.add_vertices(innerSpacerUpper + innerSpacerMiddle)
-  recordShape.add_vertices(centerHoleUpper + centerHoleMiddle + centerHoleLower)
-  if (info):
-    vertices = recordShape.get_vertices()
-    print("Number of vertices: " + str(len(vertices)))
-  
-  if (info):
-    print("Create faces:\n  Draw vertical faces")
-  
-  recordShape = add_polygon_edges(outerEdgeUpper, outerEdgeLower, recordShape)
-  recordShape = add_polygon_edges(outerSpacerUpper, outerSpacerMiddle, recordShape)
-  recordShape = add_polygon_edges(outerSpacerMiddle, outerSpacerLower, recordShape)
-  recordShape = add_polygon_edges(innerSpacerUpper, innerSpacerMiddle, recordShape)
-  recordShape = add_polygon_edges(centerHoleUpper, centerHoleLower, recordShape)
-  
-  if (info):
-    print("  Draw horizontial faces")
+    return record_shape
 
-  recordShape = add_polygon_edges(outerEdgeUpper, outerSpacerUpper, recordShape)
-  recordShape = add_polygon_edges(innerSpacerUpper, centerHoleUpper, recordShape)
-  #recordShape = add_polygon_edges(outerSpacerMiddle, innerSpacerMiddle, recordShape)
-  recordShape = add_polygon_edges(innerSpacerMiddle, centerHoleMiddle, recordShape)
-  recordShape = add_polygon_edges(outerEdgeLower, centerHoleLower, recordShape)
-
-  if (info):
-    print("Number of faces: " + str(len(recordShape.get_faces())))
-  return recordShape
-
-def main():
-  filename = str(rpm) + '_disc.stl'
-  print('Generating blank record.')
-  recordShape = calculate_record_shape()
-  recordShape.remove_duplicate_faces()
-  recordShape.remove_empty_faces()
-  
-
-  # Save mesh for debugging purposes
-  if(not os.path.isdir('stl')):
-      os.mkdir('stl')
-  record_mesh = recordShape.shape_to_mesh()
-  print("Saving file to {}".format(filename))
-  record_mesh.save("stl/" + filename)
-  
-  return recordShape
 
 if __name__ == '__main__':
-  m1 = memory_profiler.memory_usage()
-  t1 = time.process_time()
-  main()
-  t2 = time.process_time()
-  m2 = memory_profiler.memory_usage()
-  time_diff = t2 - t1
-  mem_diff = m2[0] - m1[0]
-  print(f"It took {time_diff:.2f} Secs and {mem_diff:.2f} Mb to execute this method")
+    m1 = memory_profiler.memory_usage()
+    t1 = time.process_time()
+    main()
+    t2 = time.process_time()
+    m2 = memory_profiler.memory_usage()
+    time_diff = t2 - t1
+    mem_diff = m2[0] - m1[0]
+    print(
+        f"It took {time_diff:.2f} Secs and {mem_diff:.2f} Mb to execute this method")
