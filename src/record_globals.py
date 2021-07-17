@@ -39,14 +39,12 @@ bevel = config['Groove Dimensions'].getfloat('bevel')
 groove_width = config['Groove Dimensions'].getfloat('grooveWidth')
 rate_divisor = int(config['Groove Dimensions']['rateDivisor'])
 
-
-thetaIter = truncate((60 * samplingRate) / (DOWNSAMPLING * RPM), precision)
 # 24 is the amplitude of signal (in 16 micron steps)
 amplitude = truncate((24 * microns_per_layer) / 1000, precision)
-# 6 is the measured in 16 microns steps, depth of tops of wave in groove
-# from uppermost surface of record
+# 6 is the measured in 16 microns steps, depth of tops of wave in groove from uppermost surface of record
 depth = truncate((6 * microns_per_layer) / 1000, precision)
 # calculcate angular incrementation amount
+thetaIter = truncate((30 * samplingRate) / (DOWNSAMPLING * RPM), precision)
 incrNum = truncate(tau / thetaIter, precision)
 radIncr = truncate((groove_width + 2 * bevel * amplitude) / thetaIter,
                    precision)  # calculate radial incrementation amount

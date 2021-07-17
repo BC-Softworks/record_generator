@@ -21,7 +21,7 @@ def outer_upper_vertex(rad, amp, bev, theta) -> rg.Vertex:
 
 
 def inner_upper_vertex(rad, amp, bev, theta) -> rg.Vertex:
-    width = rad - rg.groove_width - amp * bev
+    width = rad - rg.groove_width + amp * bev
     return rg.Vertex(width * cos(theta), width * sin(theta), rg.record_height)
 
 
@@ -66,7 +66,7 @@ def draw_groove_cap(last_edge, rad, height, shape):
     return shape
 
 
-def fill_remaining_area(r, shape, edge_num=32):
+def fill_remaining_area(r, shape, edge_num=20):
     """Fill the space between the last groove and the center hole"""
     remaining_space = create_polygon(rg.inner_rad, edge_num, rg.record_height)
     edge_of_groove = create_polygon(r, edge_num, rg.record_height)

@@ -43,7 +43,7 @@ def add_polygon_edges(list_a, list_b, shape):
 
 def calculate_record_shape(
         record_shape=rg.TriMesh(),
-        edge_num=32,
+        edge_num=20,
         info=True) -> mesh.Mesh:
     """ Combine the vectors in to an outer and inner circle """
     baseline = rg.record_height - 0.5
@@ -57,6 +57,7 @@ def calculate_record_shape(
 
     innerSpacerUpper = create_polygon(rg.inner_rad, edge_num, rg.record_height)
     innerSpacerMiddle = create_polygon(rg.inner_rad, edge_num, baseline)
+    innerSpacerLower = create_polygon(rg.inner_rad, edge_num)
 
     center_radius = rg.inner_hole / 2
     centerHoleUpper = create_polygon(center_radius, edge_num, rg.record_height)
@@ -67,7 +68,8 @@ def calculate_record_shape(
     record_shape.add_vertices(outerEdgeUpper + outerEdgeLower)
     outerSpacer = outerSpacerUpper + outerSpacerMiddle + outerSpacerLower
     record_shape.add_vertices(outerSpacer)
-    record_shape.add_vertices(innerSpacerUpper + innerSpacerMiddle)
+    innerSpacer = innerSpacerUpper + innerSpacerMiddle + innerSpacerLower
+    record_shape.add_vertices(innerSpacer)
     center = centerHoleUpper + centerHoleMiddle + centerHoleLower
     record_shape.add_vertices(center)    
     if info:
@@ -79,6 +81,7 @@ def calculate_record_shape(
     add_polygon_edges(outerSpacerUpper,outerSpacerMiddle, record_shape)
     add_polygon_edges(outerSpacerMiddle,outerSpacerLower, record_shape)
     add_polygon_edges(innerSpacerUpper,innerSpacerMiddle, record_shape)
+    add_polygon_edges(innerSpacerMiddle,innerSpacerLower, record_shape)
     add_polygon_edges(centerHoleUpper, centerHoleLower, record_shape)
 
     # Draw horizontial faces
