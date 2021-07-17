@@ -40,6 +40,13 @@ def groove_height(audio_array, sample_num):
     amp = audio_array[int(rg.rate_divisor * sample_num)]
     return rg.truncate( baseline * amp, rg.precision)
 
+def starting_cap(gH, shape):
+    s1 = [outer_upper_vertex(rg.RADIUS, rg.amplitude, rg.bevel, 0),
+          inner_upper_vertex(rg.RADIUS, rg.amplitude, rg.bevel, 0)]
+    s2 = [outer_lower_vertex(rg.RADIUS, 0, gH), inner_lower_vertex(rg.RADIUS, 0, gH)]
+    shape.add_vertices(s1 + s2)
+    shape.tristrip(s1, s2)
+    return shape
 
 def draw_groove_cap(last_edge, rad, height, shape):
     """Draws the ramp between the groove and inner cap"""
@@ -70,20 +77,7 @@ def fill_remaining_area(r, shape, edge_num=32):
     return shape
 
 
-def draw_spiral(audio_array, rad, shape=rg.TriMesh(), info=True):
-    """rad is the radial postion of the vertex beign drawn"""
-
-    # Inner while for groove position
-    last_edge = None
-    index = samplenum = 0
-    gH = groove_height(audio_array, samplenum)
-
-    s1 = [outer_upper_vertex(rg.RADIUS, rg.amplitude, rg.bevel, 0),
-          inner_upper_vertex(rg.RADIUS, rg.amplitude, rg.bevel, 0)]
-    s2 = [outer_lower_vertex(rg.RADIUS, 0, gH), inner_lower_vertex(rg.RADIUS, 0, gH)]
-    shape.add_vertices(s1 + s2)
-    shape.tristrip(s1, s2)
-
+def draw_spiral(samplenum, audio_array, index, rad, gH, shape, info):
     arr_length = len(audio_array)
     while rg.rate_divisor * samplenum < (arr_length - rg.rate_divisor * rg.thetaIter + 1):
         groove_outer_upper = []
@@ -104,9 +98,10 @@ def draw_spiral(audio_array, rad, shape=rg.TriMesh(), info=True):
             samplenum += 1
 
         gH = groove_height(audio_array, samplenum)
-        groove_vertices = groove_outer_upper + groove_outer_lower + \
-            groove_inner_upper + groove_inner_lower
-        shape.add_vertices(groove_vertices)
+        shape.add_vertices(groove_outer_upper)
+        shape.add_vertices(groove_outer_lower)
+        shape.add_vertices(groove_inner_upper)
+        shape.add_vertices(groove_inner_lower)
 
         if index == 0:
             # Draw triangle to close outer part of record
@@ -121,6 +116,19 @@ def draw_spiral(audio_array, rad, shape=rg.TriMesh(), info=True):
         index += 1
         if info:
             print("Groove drawn: {}".format(index))
+    return samplenum, last_edge, rad
+
+def draw_grooves(audio_array, rad, shape=rg.TriMesh(), info=True):
+    """rad is the radial postion of the vertex beign drawn"""
+
+    # Inner while for groove position
+    last_edge = None
+    index = samplenum = 0
+    gH = groove_height(audio_array, samplenum)
+
+    starting_cap(gH, shape)
+
+    samplenum, last_edge, rad = draw_spiral(samplenum, audio_array, index, rad, gH, shape, info)
 
     # Draw groove cap
     gH = groove_height(audio_array, samplenum)
@@ -146,7 +154,7 @@ def main(filename, stlname):
     print("Generate record shape")
     record_shape = calculate_record_shape(info=False)
     print("Drawing spiral object")
-    shape = draw_spiral(normalized_depth, rg.outer_rad, record_shape)
+    shape = draw_grooves(normalized_depth, rg.outer_rad, record_shape)
     print("Removing duplicate faces from shape spiral object")
     shape.remove_duplicate_faces()
     print("Removing empty faces from shape spiral object")

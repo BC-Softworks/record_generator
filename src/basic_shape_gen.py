@@ -40,8 +40,6 @@ def add_polygon_edges(list_a, list_b, shape):
     list_a.append(list_a[0])
     list_b.append(list_b[0])
     shape.tristrip(list_a, list_b)
-    return shape
-
 
 def calculate_record_shape(
         record_shape=rg.TriMesh(),
@@ -77,17 +75,17 @@ def calculate_record_shape(
         print("Number of vertices: " + str(len(vertices)))
     
     # Draw vertical faces
-    record_shape = add_polygon_edges(outerEdgeUpper, outerEdgeLower, record_shape)
-    record_shape = add_polygon_edges(outerSpacerUpper,outerSpacerMiddle, record_shape)
-    record_shape = add_polygon_edges(outerSpacerMiddle,outerSpacerLower, record_shape)
-    record_shape = add_polygon_edges(innerSpacerUpper,innerSpacerMiddle, record_shape)
-    record_shape = add_polygon_edges(centerHoleUpper, centerHoleLower, record_shape)
+    add_polygon_edges(outerEdgeUpper, outerEdgeLower, record_shape)
+    add_polygon_edges(outerSpacerUpper,outerSpacerMiddle, record_shape)
+    add_polygon_edges(outerSpacerMiddle,outerSpacerLower, record_shape)
+    add_polygon_edges(innerSpacerUpper,innerSpacerMiddle, record_shape)
+    add_polygon_edges(centerHoleUpper, centerHoleLower, record_shape)
 
     # Draw horizontial faces
-    record_shape = add_polygon_edges(outerEdgeUpper, outerSpacerUpper, record_shape)
-    record_shape = add_polygon_edges(innerSpacerUpper, centerHoleUpper, record_shape)
-    record_shape = add_polygon_edges(innerSpacerMiddle,centerHoleMiddle, record_shape)
-    record_shape = add_polygon_edges(outerEdgeLower, centerHoleLower, record_shape)
+    add_polygon_edges(outerEdgeUpper, outerSpacerUpper, record_shape)
+    add_polygon_edges(innerSpacerUpper, centerHoleUpper, record_shape)
+    add_polygon_edges(innerSpacerMiddle,centerHoleMiddle, record_shape)
+    add_polygon_edges(outerEdgeLower, centerHoleLower, record_shape)
 
     if info:
         print("Number of faces: " + str(len(record_shape.get_faces())))
@@ -119,5 +117,4 @@ if __name__ == '__main__':
     m2 = memory_profiler.memory_usage()
     time_diff = t2 - t1
     mem_diff = m2[0] - m1[0]
-    print(
-        f"It took {time_diff:.2f} Secs and {mem_diff:.2f} Mb to execute this method")
+    print(f"It took {time_diff:.2f} Secs and {mem_diff:.2f} Mb to execute this method")
