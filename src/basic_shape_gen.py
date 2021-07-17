@@ -53,9 +53,9 @@ def calculate_record_shape(
     outerEdgeUpper = create_polygon(rg.RADIUS, edge_num, rg.record_height)
     outerEdgeLower = create_polygon(rg.RADIUS, edge_num)
 
-    outerSpacerUpper = create_polygon(rg.outer_rad, edge_num, rg.record_height)
-    outerSpacerMiddle = create_polygon(rg.outer_rad, edge_num, baseline)
-    outerSpacerLower = create_polygon(rg.outer_rad, edge_num)
+    outerSpacerUpper = create_polygon(rg.outer_rad + 0.25, edge_num, rg.record_height)
+    outerSpacerMiddle = create_polygon(rg.outer_rad + 0.25, edge_num, baseline)
+    outerSpacerLower = create_polygon(rg.outer_rad + 0.25, edge_num)
 
     innerSpacerUpper = create_polygon(rg.inner_rad, edge_num, rg.record_height)
     innerSpacerMiddle = create_polygon(rg.inner_rad, edge_num, baseline)

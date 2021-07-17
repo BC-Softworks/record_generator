@@ -81,3 +81,6 @@ venv.bak/
 *.gz
 *.wav
 *.pdf
+.vscode/settings.json
+.vscode/.ropeproject/config.py
+.vscode/.ropeproject/objectdb

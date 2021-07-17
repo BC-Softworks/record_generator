@@ -42,7 +42,7 @@ def groove_height(audio_array, sample_num):
 
 
 def draw_groove_cap(last_edge, rad, height, shape):
-    """Draws the ramp between the groove and outer cap"""
+    """Draws the ramp between the groove and inner cap"""
     stop1 = [outer_upper_vertex(rad, rg.amplitude, rg.bevel, 0),
              inner_upper_vertex(rad, rg.amplitude, rg.bevel, 0)]
     stop2 = [outer_lower_vertex(rad, 0, height), inner_lower_vertex(rad, 0, height)]
