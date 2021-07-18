@@ -1,11 +1,13 @@
-from bidict import bidict
-import numpy as np
-from math import pi
 import configparser
+import copy
 from collections import OrderedDict, namedtuple
+from math import pi
 
+import numpy as np
+from bidict import bidict
 # https://pypi.org/project/numpy-stl/
 from stl import mesh
+
 
 def truncate(n, decimals=0):
     multiplier = 10 ** decimals
@@ -59,6 +61,9 @@ class TriMesh():
 
     def __str__(self):
         return str(self.vertices)
+    
+    def __len__(self):
+        return len(self.faces)
 
     def add_vertex(self, xyz) -> int:
         assert len(xyz) == 3
@@ -75,34 +80,60 @@ class TriMesh():
 
     # It is faster to add all the faces and remove duplicates at the end
     # then to check after every add
-    def add_face(self, point_a, point_b, point_c):
-        points = [point_a, point_b, point_c]
-        v = Vertex(*[self.vertices.inverse[x] for x in points])
-        self.faces.append(v)
+    def add_face(self, vertices):
+        self.add_vertices(vertices)
+        self.faces.append(tuple([self.vertices.inverse[item] for item in vertices]))
 
     def get_vertices(self):
+        """ Returns a numpy array of cartesian coordinates """
         lst = [self.vertices[i] for i in range(0, len(self.vertices))]
         return np.array(lst)
 
-    def get_faces(self):
+    def get_faces_vertices(self):
+        for f in self.faces:
+            yield tuple(map(lambda index: self.vertices[index], f))
+
+    def get_faces_by_index(self):
         return np.array(self.faces)
 
     def tristrip(self, list_a, list_b):
         lst = min(len(list_a), len(list_b)) - 1
         for i in range(0, lst):
-            self.add_face(list_a[i], list_a[i + 1], list_b[i])
-            self.add_face(list_b[i], list_b[i + 1], list_a[i + 1])
+            self.add_face(Vertex(list_a[i], list_a[i + 1], list_b[i]))
+            self.add_face(Vertex(list_b[i], list_b[i + 1], list_a[i + 1]))
+    
+    def merge(self, trimesh):
+        assert isinstance(trimesh, self)
+        self.add_vertices(trimesh.get_vertices().tolist())
+        for face in trimesh.get_faces_vertices():
+            self.add_face(face)
 
-    def remove_duplicate_faces(self):
+    def remove_duplicate_faces(self, info=False):
+        number_of_faces = len(self)
         self.faces = list(OrderedDict.fromkeys(self.faces))
+        if info :
+            print("Faces removed: ", number_of_faces - len(self))
 
-    def remove_empty_faces(self):
+    def remove_empty_faces(self, info=False):
+        """ Removes faces of colinear vertices"""
+        number_of_faces = len(self)
         self.faces = list(
             filter(
                 lambda f: f[0] != f[1] and f[0] != f[2],
                 self.faces))
+        if info :
+            print("Faces removed: ", number_of_faces - len(self))
 
-    def shape_to_mesh(self) -> mesh.Mesh:
+    def remove_empty_faces(self, info=False):
+        number_of_faces = len(self)
+        self.faces = list(
+            filter(
+                lambda f: f[0] != f[1] and f[0] != f[2],
+                self.faces))
+        if info :
+            print("Faces removed: ", number_of_faces - len(self))
+
+    def trimesh_to_npmesh(self) -> mesh.Mesh:
         vertices = self.get_vertices()
         number_of_faces = len(self.faces)
         rec = mesh.Mesh(
