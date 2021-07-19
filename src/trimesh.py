@@ -13,27 +13,28 @@ from skiplist import SkipList
 
 Vertex = namedtuple('Vertex', 'x y z')
 
-def vector_length(face):
-    """Length of each vector in a triangle"""
-    def length(v1, v2):
-        x2 = v2.x - v1.x
-        y2 = v2.y - v1.y
-        z2 = v2.z - v1.z
-        return sqrt(x2 + y2 + z2)
+def magnitude(a, b):
+    return sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2 + (b.z - a.z) ** 2)
 
-    return length(face[0], face[1]), length(face[0], face[2]), length(face[1], face[2])
+def midpoint(a, b):
+    return Vertex((a.x + b.x) / 2, (a.y + b.y)/ 2 , (a.z + b.z)/ 2)
 
-def area_of_triangle(abc):
-    """Heron's formula for the area of a triangle"""
-    a, b, c = abc
-    a_squared = a ** 2
-    c_squared = c ** 2
-    return sqrt(abs(a_squared  * c_squared - ((a_squared + c_squared - (b ** 2)) / 2) ** 2)) / 2
+def area_of_triangle(vertices):
+    """Faster triangle area calculator"""
+    a, b, c = vertices
+
+    base = magnitude(a, b)
+    height = magnitude(midpoint(a,b), c)
+    return base * height / 2
     
 class TriMesh():
     def __init__(self, dictionary={}):
+        def less_than(elem_0, elem_1):
+            fun = lambda elem: tuple(map(lambda index: self.vertices[index], elem))
+            return area_of_triangle(fun(elem_0)) <  area_of_triangle(fun(elem_1))
+
         self.vertices = bidict(dictionary)
-        self.faces = SkipList(less_than = lambda a, b : area_of_triangle(a) <  area_of_triangle(b))
+        self.faces = SkipList(less_than)
 
     def __str__(self):
         return str(self.vertices)
