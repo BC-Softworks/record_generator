@@ -11,27 +11,28 @@ import memory_profiler
 import stl
 
 import record_globals as rg
+import trimesh as tm
 
 from basic_shape_gen import create_polygon, calculate_record_shape
 
 
-def outer_upper_vertex(rad, amp, bev, theta) -> rg.Vertex:
+def outer_upper_vertex(rad, amp, bev, theta) -> tm.Vertex:
     width = rad + amp * bev
-    return rg.Vertex(width * cos(theta), width * sin(theta), rg.record_height)
+    return tm.Vertex(width * cos(theta), width * sin(theta), rg.record_height)
 
 
-def inner_upper_vertex(rad, amp, bev, theta) -> rg.Vertex:
+def inner_upper_vertex(rad, amp, bev, theta) -> tm.Vertex:
     width = rad - rg.groove_width + amp * bev
-    return rg.Vertex(width * cos(theta), width * sin(theta), rg.record_height)
+    return tm.Vertex(width * cos(theta), width * sin(theta), rg.record_height)
 
 
-def outer_lower_vertex(rad, theta, g_h) -> rg.Vertex:
-    return rg.Vertex(rad * cos(theta), rad * sin(theta), g_h)
+def outer_lower_vertex(rad, theta, g_h) -> tm.Vertex:
+    return tm.Vertex(rad * cos(theta), rad * sin(theta), g_h)
 
 
-def inner_lower_vertex(rad, theta, g_h) -> rg.Vertex:
+def inner_lower_vertex(rad, theta, g_h) -> tm.Vertex:
     w = rad - rg.groove_width
-    return rg.Vertex(w * cos(theta), w * sin(theta), g_h)
+    return tm.Vertex(w * cos(theta), w * sin(theta), g_h)
 
 
 def groove_height(audio_array, sample_num):
@@ -110,12 +111,13 @@ def draw_spiral(samplenum, audio_array, index, rad, gH, shape, info):
             print("Groove drawn: {}".format(index))
     return samplenum, last_edge, rad
 
-def draw_grooves(audio_array, rad, shape=rg.TriMesh(), info=True):
+def draw_grooves(audio_array, rad, shape=tm.TriMesh(), info=True):
     """rad is the radial postion of the vertex beign drawn"""
 
     # Inner while for groove position
     last_edge = None
-    index = samplenum = 0
+    index = 0
+    samplenum = 0
     gH = groove_height(audio_array, samplenum)
 
     starting_cap(gH, shape)

@@ -9,7 +9,7 @@ import memory_profiler
 # https://pypi.org/project/numpy-stl/
 from stl import mesh
 
-# Global variables
+import trimesh as tm
 import record_globals as rg
 
 
@@ -42,7 +42,7 @@ def add_polygon_edges(list_a, list_b, shape):
     shape.tristrip(list_a, list_b)
 
 def calculate_record_shape(
-        record_shape=rg.TriMesh(),
+        record_shape=tm.TriMesh(),
         edge_num=20,
         info=True) -> mesh.Mesh:
     """ Combine the vectors in to an outer and inner circle """
@@ -89,7 +89,6 @@ def main():
     filename = str(rg.RPM) + '_disc.stl'
     print('Generating blank record.')
     record_trimesh = calculate_record_shape()
-    record_trimesh.remove_duplicate_faces()
     record_trimesh.remove_empty_faces()
 
     # Save mesh for debugging purposes
