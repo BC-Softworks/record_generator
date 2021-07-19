@@ -89,6 +89,7 @@ def main():
     filename = str(rg.RPM) + '_disc.stl'
     print('Generating blank record.')
     record_trimesh = calculate_record_shape()
+    record_trimesh.remove_duplicate_faces()
     record_trimesh.remove_empty_faces()
 
     # Save mesh for debugging purposes

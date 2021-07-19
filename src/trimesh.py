@@ -1,15 +1,12 @@
 
 import copy
 from collections import OrderedDict, namedtuple
-
 from math import sqrt
 
 import numpy as np
 from bidict import bidict
 # https://pypi.org/project/numpy-stl/
 from stl import mesh
-
-from skiplist import SkipList
 
 Vertex = namedtuple('Vertex', 'x y z')
 
@@ -29,12 +26,8 @@ def area_of_triangle(vertices):
     
 class TriMesh():
     def __init__(self, dictionary={}):
-        def less_than(elem_0, elem_1):
-            fun = lambda elem: tuple(map(lambda index: self.vertices[index], elem))
-            return area_of_triangle(fun(elem_0)) <  area_of_triangle(fun(elem_1))
-
         self.vertices = bidict(dictionary)
-        self.faces = SkipList(less_than)
+        self.faces = []
 
     def __str__(self):
         return str(self.vertices)
@@ -60,8 +53,7 @@ class TriMesh():
     def add_face(self, vertices):
         self.add_vertices(vertices)
         new_face = tuple([self.vertices.inverse[item] for item in vertices])
-        # Ordering the faces by size to speed up searches
-        self.faces.insert(new_face)
+        self.faces.append(new_face)
 
     def get_vertices(self):
         """ Returns a numpy array of cartesian coordinates """
@@ -73,7 +65,7 @@ class TriMesh():
             yield tuple(map(lambda index: self.vertices[index], f))
 
     def get_faces_by_index(self):
-        return np.array(self.faces.to_list())
+        return np.array(self.faces)
 
     def tristrip(self, list_a, list_b):
         lst = min(len(list_a), len(list_b)) - 1
@@ -87,34 +79,22 @@ class TriMesh():
         for face in trimesh.get_faces_vertices():
             self.add_face(face)
 
-    def remove_empty_faces(self, info=False):
+    def _faces_removed(self, func):
+        number_of_faces = len(self)
+        self.faces = func(self.faces)
+        print("Faces removed: ", number_of_faces - len(self))
+
+    def remove_duplicate_faces(self):
+        self._faces_removed(lambda x: list(OrderedDict.fromkeys(x)))
+
+    def remove_empty_faces(self):
         """ Removes faces of colinear vertices"""
-        number_of_faces = len(self)
-        for f in self.faces.to_generator():
-            if f[0] != f[1] and f[0] != f[2]:
-                self.faces.remove(f)
-
-        if info:
-            print("Faces removed: ", number_of_faces - len(self))
-
-    def remove_interior_faces(self, tiny = 0.05, info=False):
-        """ Remove small faces that are overlapped completly by a large face """
-        
-        def tiny_faces():
-            for f in self.faces:
-                area = area_of_triangle(vector_lengths(f))
-                if area > tiny:
-                    yield face
-        
-        number_of_faces = len(self)
-        # TODO: Add loop to check if small faces need removed
-        if info:
-            print("Faces removed: ", number_of_faces - len(self))
+        self._faces_removed(lambda x: list(filter(lambda f: f[0] != f[1] and f[0] != f[2], x)))
 
     def trimesh_to_npmesh(self) -> mesh.Mesh:
         vertices = self.get_vertices()
         number_of_faces = len(self.faces)
-        faces = self.faces.to_list()
+        faces = self.faces
         rec = mesh.Mesh(
             data=np.zeros(number_of_faces, dtype=mesh.Mesh.dtype), speedups=True)
         for f in range(number_of_faces):
