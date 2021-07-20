@@ -11,20 +11,26 @@ from stl import mesh
 
 Vertex = namedtuple('Vertex', 'x y z')
 
+def squared_magnitude(a, b):
+    return (b.x - a.x) ** 2 + (b.y - a.y) ** 2 + (b.z - a.z) ** 2
+
 def magnitude(a, b):
-    return sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2 + (b.z - a.z) ** 2)
+    return sqrt(squared_magnitude(a, b))
+
 
 def midpoint(a, b):
-    return Vertex((a.x + b.x) / 2, (a.y + b.y)/ 2 , (a.z + b.z)/ 2)
+    return Vertex((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2)
+
 
 def area_of_triangle(vertices):
     """Faster triangle area calculator"""
     a, b, c = vertices
 
     base = magnitude(a, b)
-    height = magnitude(midpoint(a,b), c)
+    height = magnitude(midpoint(a, b), c)
     return base * height / 2
-    
+
+
 class TriMesh():
     def __init__(self, dictionary={}):
         self.vertices = bidict(dictionary)
@@ -59,13 +65,33 @@ class TriMesh():
     def add_faces(self, lst):
         for f in lst:
             self.add_face(Vertex(*f))
-    
+
     def add_faces_by_index(self, lst):
         for f in lst:
             if max(f) < len(self.vertices):
                 self.faces.append(f)
             else:
                 raise IndexError
+
+    def add_quad(self, faces):
+        """Add quaderlateral face"""
+        assert len(faces) == 4
+        def draw_triangles(diagonal_1, diagonal_2):
+            a, d = diagonal_1
+            b, c = diagonal_2
+            self.add_face([a, b, c])
+            self.add_face([b, c, d])
+        
+        dist = [0]
+        for i in range(1,4):
+            dist.append(squared_magnitude(faces[0], faces[i]))
+        index = dist.index(max(dist))
+        if index == 1:
+            draw_triangles((faces[0], faces[1]), (faces[2], faces[3]))
+        elif index == 2:
+            draw_triangles((faces[0], faces[2]), (faces[1], faces[3]))
+        else:
+            draw_triangles((faces[0], faces[3]), (faces[1], faces[2]))
 
     def get_vertices(self):
         """ Returns a numpy array of cartesian coordinates """
@@ -82,7 +108,7 @@ class TriMesh():
     def get_edges(self):
         edge_lst = []
         for face in self.faces:
-            edge_lst.extend(combinations(list(face), 2))   
+            edge_lst.extend(combinations(list(face), 2))
         return set(edge_lst)
 
     def tristrip(self, list_a, list_b):
@@ -90,6 +116,12 @@ class TriMesh():
         for i in range(0, lst):
             self.add_face(Vertex(list_a[i], list_a[i + 1], list_b[i]))
             self.add_face(Vertex(list_b[i], list_b[i + 1], list_a[i + 1]))
+        
+    def quadstrip(self, list_a, list_b):
+        lst = min(len(list_a), len(list_b)) - 1
+        for i in range(0, lst):
+            self.add_quad((list_a[i], list_a[i + 1], list_b[i], list_b[i+1]))
+            
 
     def merge(self, trimesh):
         assert isinstance(trimesh, self)
@@ -97,24 +129,25 @@ class TriMesh():
         for face in trimesh.get_faces_vertices():
             self.add_face(face)
 
-    def _faces_removed(self, func):
+    def _faces_removed(self, func, string = ''):
         number_of_faces = len(self)
         self.faces = func(self.faces)
-        print("Faces removed: ", number_of_faces - len(self))
+        print(string + "Faces removed: ", number_of_faces - len(self))
 
     def remove_duplicate_faces(self):
-        self._faces_removed(lambda x: list(OrderedDict.fromkeys(x)))
+        self._faces_removed(lambda x: list(OrderedDict.fromkeys(x)), 'Duplicate ')
 
     def remove_empty_faces(self):
         """ Removes faces of colinear vertices"""
-        self._faces_removed(lambda x: list(filter(lambda f: f[0] != f[1] and f[0] != f[2], x)))
+        self._faces_removed(lambda x: list(
+            filter(lambda f: f[0] != f[1] and f[0] != f[2], x)), 'Empty ')
 
     def is_manifold(self):
         number_of_vertices = len(self.faces)
         number_of_faces = len(self.faces)
         edge_set = self.get_edges()
         number_of_edges = len(edge_set)
-        print("Edge set: ", edge_set)
+        #print("Edge set: ", edge_set)
         print("Number of edges: ", number_of_edges)
         count = number_of_vertices - number_of_edges + number_of_faces
         print(count)
@@ -122,7 +155,7 @@ class TriMesh():
             print("Manifold")
         else:
             print("Not manifold")
-        
+
         return count == 2
 
     def trimesh_to_npmesh(self) -> mesh.Mesh:

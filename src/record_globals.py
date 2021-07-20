@@ -9,7 +9,7 @@ def truncate(n, decimals=0):
 
 # Set 2pi
 precision = 5
-tau = truncate(2 * pi, precision)
+tau = 2 * pi
 
 # Set global variable from constants file
 config = configparser.ConfigParser()

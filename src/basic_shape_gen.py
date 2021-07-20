@@ -27,19 +27,15 @@ def polygon_generator(rad, edge_num):
 def setzpos(arr, height=0) -> tuple:
     """ Add z position to each vector of x and y """
     for lst in arr:
-        yield(lst[0], lst[1], height)
+        yield tm.Vertex(lst[0], lst[1], height)
 
 
 def create_polygon(rad, num, height=0):
-    lst = list(polygon_generator(rad, num))
-    return list(setzpos(lst, height))
-
-
-def add_polygon_edges(list_a, list_b, shape):
-    """ tristrip edges of polygon """
-    list_a.append(list_a[0])
-    list_b.append(list_b[0])
-    shape.tristrip(list_a, list_b)
+    vertex_list = list(polygon_generator(rad, num))
+    lst = list(setzpos(vertex_list, height))[0:num+1]
+    lst.append(lst[0])
+    assert len(lst) == num + 1
+    return lst
 
 def calculate_record_shape(
         record_shape=tm.TriMesh(),
@@ -65,18 +61,18 @@ def calculate_record_shape(
     centerHoleLower = create_polygon(center_radius, edge_num)
     
     # Draw vertical faces
-    add_polygon_edges(outerEdgeUpper, outerEdgeLower, record_shape)
-    add_polygon_edges(outerSpacerUpper, outerSpacerMiddle, record_shape)
-    add_polygon_edges(outerSpacerMiddle, outerSpacerLower, record_shape)
-    add_polygon_edges(innerSpacerUpper, innerSpacerMiddle, record_shape)
-    add_polygon_edges(innerSpacerMiddle, innerSpacerLower, record_shape)
-    add_polygon_edges(centerHoleUpper, centerHoleLower, record_shape)
+    record_shape.quadstrip(outerEdgeUpper, outerEdgeLower)
+    record_shape.quadstrip(outerSpacerUpper, outerSpacerMiddle)
+    record_shape.quadstrip(outerSpacerMiddle, outerSpacerLower)
+    record_shape.quadstrip(innerSpacerUpper, innerSpacerMiddle)
+    record_shape.quadstrip(innerSpacerMiddle, innerSpacerLower)
+    record_shape.quadstrip(centerHoleUpper, centerHoleLower)
 
     # Draw horizontial faces
-    add_polygon_edges(outerEdgeUpper, outerSpacerUpper, record_shape)
-    add_polygon_edges(innerSpacerUpper, centerHoleUpper, record_shape)
-    add_polygon_edges(innerSpacerMiddle,centerHoleMiddle, record_shape)
-    add_polygon_edges(outerEdgeLower, centerHoleLower, record_shape)
+    record_shape.quadstrip(outerEdgeUpper, outerSpacerUpper)
+    record_shape.quadstrip(innerSpacerUpper, centerHoleUpper)
+    record_shape.quadstrip(innerSpacerMiddle, centerHoleMiddle)
+    record_shape.quadstrip(outerEdgeLower, centerHoleLower)
 
     if info:
         vertices = record_shape.get_vertices()
