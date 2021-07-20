@@ -11,27 +11,28 @@ import memory_profiler
 import stl
 
 import record_globals as rg
+import trimesh as tm
 
 from basic_shape_gen import create_polygon, calculate_record_shape
 
 
-def outer_upper_vertex(rad, amp, bev, theta) -> rg.Vertex:
+def outer_upper_vertex(rad, amp, bev, theta) -> tm.Vertex:
     width = rad + amp * bev
-    return rg.Vertex(width * cos(theta), width * sin(theta), rg.record_height)
+    return tm.Vertex(width * cos(theta), width * sin(theta), rg.record_height)
 
 
-def inner_upper_vertex(rad, amp, bev, theta) -> rg.Vertex:
+def inner_upper_vertex(rad, amp, bev, theta) -> tm.Vertex:
     width = rad - rg.groove_width + amp * bev
-    return rg.Vertex(width * cos(theta), width * sin(theta), rg.record_height)
+    return tm.Vertex(width * cos(theta), width * sin(theta), rg.record_height)
 
 
-def outer_lower_vertex(rad, theta, g_h) -> rg.Vertex:
-    return rg.Vertex(rad * cos(theta), rad * sin(theta), g_h)
+def outer_lower_vertex(rad, theta, g_h) -> tm.Vertex:
+    return tm.Vertex(rad * cos(theta), rad * sin(theta), g_h)
 
 
-def inner_lower_vertex(rad, theta, g_h) -> rg.Vertex:
+def inner_lower_vertex(rad, theta, g_h) -> tm.Vertex:
     w = rad - rg.groove_width
-    return rg.Vertex(w * cos(theta), w * sin(theta), g_h)
+    return tm.Vertex(w * cos(theta), w * sin(theta), g_h)
 
 
 def groove_height(audio_array, sample_num):
@@ -44,7 +45,6 @@ def starting_cap(gH, shape):
     s1 = [outer_upper_vertex(rg.RADIUS, rg.amplitude, rg.bevel, 0),
           inner_upper_vertex(rg.RADIUS, rg.amplitude, rg.bevel, 0)]
     s2 = [outer_lower_vertex(rg.RADIUS, 0, gH), inner_lower_vertex(rg.RADIUS, 0, gH)]
-    shape.add_vertices(s1 + s2)
     shape.tristrip(s1, s2)
     return shape
 
@@ -53,7 +53,6 @@ def draw_groove_cap(last_edge, rad, height, shape):
     stop1 = [outer_upper_vertex(rad, rg.amplitude, rg.bevel, 0),
              inner_upper_vertex(rad, rg.amplitude, rg.bevel, 0)]
     stop2 = [outer_lower_vertex(rad, 0, height), inner_lower_vertex(rad, 0, height)]
-    shape.add_vertices(stop1 + stop2)
 
     # Draw triangles
     shape.tristrip(stop1, stop2)
@@ -70,7 +69,6 @@ def fill_remaining_area(r, shape, edge_num=20):
     """Fill the space between the last groove and the center hole"""
     remaining_space = create_polygon(rg.inner_rad, edge_num, rg.record_height)
     edge_of_groove = create_polygon(r, edge_num, rg.record_height)
-    shape.add_vertices(remaining_space + edge_of_groove)
     remaining_space.append(remaining_space[0])
     edge_of_groove.append(edge_of_groove[0])
     shape.tristrip(remaining_space, edge_of_groove)
@@ -98,11 +96,6 @@ def draw_spiral(samplenum, audio_array, index, rad, gH, shape, info):
             samplenum += 1
 
         gH = groove_height(audio_array, samplenum)
-        shape.add_vertices(groove_outer_upper)
-        shape.add_vertices(groove_outer_lower)
-        shape.add_vertices(groove_inner_upper)
-        shape.add_vertices(groove_inner_lower)
-
         if index == 0:
             # Draw triangle to close outer part of record
             shape.tristrip(groove_outer_upper, groove_outer_lower)
@@ -118,12 +111,13 @@ def draw_spiral(samplenum, audio_array, index, rad, gH, shape, info):
             print("Groove drawn: {}".format(index))
     return samplenum, last_edge, rad
 
-def draw_grooves(audio_array, rad, shape=rg.TriMesh(), info=True):
+def draw_grooves(audio_array, rad, shape=tm.TriMesh(), info=True):
     """rad is the radial postion of the vertex beign drawn"""
 
     # Inner while for groove position
     last_edge = None
-    index = samplenum = 0
+    index = 0
+    samplenum = 0
     gH = groove_height(audio_array, samplenum)
 
     starting_cap(gH, shape)
@@ -152,15 +146,15 @@ def main(filename, stlname):
     normalized_depth = [rg.truncate(x / current_max, rg.precision) for x in lst]
 
     print("Generate record shape")
-    record_shape = calculate_record_shape(info=False)
+    record_mesh = calculate_record_shape(info=False)
     print("Drawing spiral object")
-    shape = draw_grooves(normalized_depth, rg.outer_rad, record_shape)
+    trimesh = draw_grooves(normalized_depth, rg.outer_rad, record_mesh)
     print("Removing duplicate faces from shape spiral object")
-    shape.remove_duplicate_faces()
+    trimesh.remove_duplicate_faces()
     print("Removing empty faces from shape spiral object")
-    shape.remove_empty_faces()
+    trimesh.remove_empty_faces()    
     print("Converting shape to mesh object")
-    full_mesh = shape.shape_to_mesh()
+    full_mesh = trimesh.trimesh_to_npmesh()
     print("Saving mesh to " + "stl/" + stlname + ".stl")
     full_mesh.save("stl/" + stlname + ".stl", mode=stl.Mode.BINARY)
 

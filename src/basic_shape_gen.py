@@ -9,7 +9,7 @@ import memory_profiler
 # https://pypi.org/project/numpy-stl/
 from stl import mesh
 
-# Global variables
+import trimesh as tm
 import record_globals as rg
 
 
@@ -42,7 +42,7 @@ def add_polygon_edges(list_a, list_b, shape):
     shape.tristrip(list_a, list_b)
 
 def calculate_record_shape(
-        record_shape=rg.TriMesh(),
+        record_shape=tm.TriMesh(),
         edge_num=20,
         info=True) -> mesh.Mesh:
     """ Combine the vectors in to an outer and inner circle """
@@ -63,25 +63,13 @@ def calculate_record_shape(
     centerHoleUpper = create_polygon(center_radius, edge_num, rg.record_height)
     centerHoleMiddle = create_polygon(center_radius, edge_num, baseline)
     centerHoleLower = create_polygon(center_radius, edge_num)
-
-    # Adding vertices to the shape
-    record_shape.add_vertices(outerEdgeUpper + outerEdgeLower)
-    outerSpacer = outerSpacerUpper + outerSpacerMiddle + outerSpacerLower
-    record_shape.add_vertices(outerSpacer)
-    innerSpacer = innerSpacerUpper + innerSpacerMiddle + innerSpacerLower
-    record_shape.add_vertices(innerSpacer)
-    center = centerHoleUpper + centerHoleMiddle + centerHoleLower
-    record_shape.add_vertices(center)    
-    if info:
-        vertices = record_shape.get_vertices()
-        print("Number of vertices: " + str(len(vertices)))
     
     # Draw vertical faces
     add_polygon_edges(outerEdgeUpper, outerEdgeLower, record_shape)
-    add_polygon_edges(outerSpacerUpper,outerSpacerMiddle, record_shape)
-    add_polygon_edges(outerSpacerMiddle,outerSpacerLower, record_shape)
-    add_polygon_edges(innerSpacerUpper,innerSpacerMiddle, record_shape)
-    add_polygon_edges(innerSpacerMiddle,innerSpacerLower, record_shape)
+    add_polygon_edges(outerSpacerUpper, outerSpacerMiddle, record_shape)
+    add_polygon_edges(outerSpacerMiddle, outerSpacerLower, record_shape)
+    add_polygon_edges(innerSpacerUpper, innerSpacerMiddle, record_shape)
+    add_polygon_edges(innerSpacerMiddle, innerSpacerLower, record_shape)
     add_polygon_edges(centerHoleUpper, centerHoleLower, record_shape)
 
     # Draw horizontial faces
@@ -91,26 +79,25 @@ def calculate_record_shape(
     add_polygon_edges(outerEdgeLower, centerHoleLower, record_shape)
 
     if info:
-        print("Number of faces: " + str(len(record_shape.get_faces())))
+        vertices = record_shape.get_vertices()
+        print("Number of vertices: " + str(len(vertices)))
+        print("Number of faces: " + str(len(record_shape)))
     return record_shape
 
 
-def main() -> rg.TriMesh:
+def main():
     filename = str(rg.RPM) + '_disc.stl'
     print('Generating blank record.')
-    record_shape = calculate_record_shape()
-    record_shape.remove_duplicate_faces()
-    record_shape.remove_empty_faces()
+    record_trimesh = calculate_record_shape()
+    record_trimesh.remove_duplicate_faces()
+    record_trimesh.remove_empty_faces()
 
     # Save mesh for debugging purposes
     if not os.path.isdir('stl'):
         os.mkdir('stl')
-    record_mesh = record_shape.shape_to_mesh()
+    record_mesh = record_trimesh.trimesh_to_npmesh()
     print("Saving file to {}".format(filename))
     record_mesh.save("stl/" + filename)
-
-    return record_shape
-
 
 if __name__ == '__main__':
     m1 = memory_profiler.memory_usage()
