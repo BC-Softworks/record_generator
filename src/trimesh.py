@@ -2,6 +2,7 @@
 import copy
 from collections import OrderedDict, namedtuple
 from math import sqrt
+from itertools import combinations
 
 import numpy as np
 from bidict import bidict
@@ -55,6 +56,17 @@ class TriMesh():
         new_face = tuple([self.vertices.inverse[item] for item in vertices])
         self.faces.append(new_face)
 
+    def add_faces(self, lst):
+        for f in lst:
+            self.add_face(Vertex(*f))
+    
+    def add_faces_by_index(self, lst):
+        for f in lst:
+            if max(f) < len(self.vertices):
+                self.faces.append(f)
+            else:
+                raise IndexError
+
     def get_vertices(self):
         """ Returns a numpy array of cartesian coordinates """
         lst = [self.vertices[i] for i in range(0, len(self.vertices))]
@@ -66,6 +78,12 @@ class TriMesh():
 
     def get_faces_by_index(self):
         return np.array(self.faces)
+
+    def get_edges(self):
+        edge_lst = []
+        for face in self.faces:
+            edge_lst.extend(combinations(list(face), 2))   
+        return set(edge_lst)
 
     def tristrip(self, list_a, list_b):
         lst = min(len(list_a), len(list_b)) - 1
@@ -90,6 +108,22 @@ class TriMesh():
     def remove_empty_faces(self):
         """ Removes faces of colinear vertices"""
         self._faces_removed(lambda x: list(filter(lambda f: f[0] != f[1] and f[0] != f[2], x)))
+
+    def is_manifold(self):
+        number_of_vertices = len(self.faces)
+        number_of_faces = len(self.faces)
+        edge_set = self.get_edges()
+        number_of_edges = len(edge_set)
+        print("Edge set: ", edge_set)
+        print("Number of edges: ", number_of_edges)
+        count = number_of_vertices - number_of_edges + number_of_faces
+        print(count)
+        if count == 2:
+            print("Manifold")
+        else:
+            print("Not manifold")
+        
+        return count == 2
 
     def trimesh_to_npmesh(self) -> mesh.Mesh:
         vertices = self.get_vertices()

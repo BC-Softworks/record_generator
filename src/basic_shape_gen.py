@@ -91,6 +91,7 @@ def main():
     record_trimesh = calculate_record_shape()
     record_trimesh.remove_duplicate_faces()
     record_trimesh.remove_empty_faces()
+    record_trimesh.is_manifold()
 
     # Save mesh for debugging purposes
     if not os.path.isdir('stl'):
