@@ -1,8 +1,8 @@
+[![Pylint](https://github.com/BC-Softworks/record_generator/actions/workflows/pylint.yml/badge.svg)](https://github.com/BC-Softworks/record_generator/actions/workflows/pylint.yml)
 # Record Generator
 
 Converts wave and aifc files to an STL file of a properly encoded of 45 rpm record.
 As of v0.2 record shape is configurable.
-An updated project summary and walkthrough is to be included in v0.3 in the info folder.
 
 ## Depndencies
 
@@ -17,7 +17,6 @@ pip install -r requirements.txt
 Add audio file, wav, wave, aifc or aiff, to audio folder then run
 ```bash
 python3 src/lpcm_to_csv.py <filename>
-python3 src/basic_shape_gen.py
 python3 src/record_gen.py
 ```
 
