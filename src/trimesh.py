@@ -140,22 +140,16 @@ class TriMesh():
     def remove_empty_faces(self):
         """ Removes faces of colinear vertices"""
         self._faces_removed(lambda x: list(
-            filter(lambda f: f[0] != f[1] and f[0] != f[2], x)), 'Empty ')
+            filter(lambda f: f[0] != f[1] and f[0] != f[2] and f[1] != f[2], x)), 'Empty ')
 
     def is_manifold(self):
         number_of_vertices = len(self.faces)
         number_of_faces = len(self.faces)
         edge_set = self.get_edges()
         number_of_edges = len(edge_set)
-        #print("Edge set: ", edge_set)
         print("Number of edges: ", number_of_edges)
-        count = number_of_vertices - number_of_edges + number_of_faces
-        print(count)
-        if count == 2:
-            print("Manifold")
-        else:
-            print("Not manifold")
-
+        count = abs(number_of_vertices - number_of_edges + number_of_faces)
+        print('Count: ', count)
         return count == 2
 
     def trimesh_to_npmesh(self) -> mesh.Mesh:

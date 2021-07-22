@@ -39,21 +39,19 @@ def create_polygon(rad, num, height=0):
 
 def calculate_record_shape(
         record_shape=tm.TriMesh(),
-        edge_num=20,
+        edge_num=8,
         info=True) -> mesh.Mesh:
     """ Combine the vectors in to an outer and inner circle """
-    baseline = rg.record_height - 0.5
+    baseline = rg.record_height - 1
 
     outerEdgeUpper = create_polygon(rg.RADIUS, edge_num, rg.record_height)
     outerEdgeLower = create_polygon(rg.RADIUS, edge_num)
 
     outerSpacerUpper = create_polygon(rg.outer_rad + 0.25, edge_num, rg.record_height)
     outerSpacerMiddle = create_polygon(rg.outer_rad + 0.25, edge_num, baseline)
-    outerSpacerLower = create_polygon(rg.outer_rad + 0.25, edge_num)
 
     innerSpacerUpper = create_polygon(rg.inner_rad, edge_num, rg.record_height)
     innerSpacerMiddle = create_polygon(rg.inner_rad, edge_num, baseline)
-    innerSpacerLower = create_polygon(rg.inner_rad, edge_num)
 
     center_radius = rg.inner_hole / 2
     centerHoleUpper = create_polygon(center_radius, edge_num, rg.record_height)
@@ -63,16 +61,15 @@ def calculate_record_shape(
     # Draw vertical faces
     record_shape.quadstrip(outerEdgeUpper, outerEdgeLower)
     record_shape.quadstrip(outerSpacerUpper, outerSpacerMiddle)
-    record_shape.quadstrip(outerSpacerMiddle, outerSpacerLower)
     record_shape.quadstrip(innerSpacerUpper, innerSpacerMiddle)
-    record_shape.quadstrip(innerSpacerMiddle, innerSpacerLower)
     record_shape.quadstrip(centerHoleUpper, centerHoleLower)
 
     # Draw horizontial faces
-    record_shape.quadstrip(outerEdgeUpper, outerSpacerUpper)
-    record_shape.quadstrip(innerSpacerUpper, centerHoleUpper)
-    record_shape.quadstrip(innerSpacerMiddle, centerHoleMiddle)
-    record_shape.quadstrip(outerEdgeLower, centerHoleLower)
+    record_shape.tristrip(outerEdgeUpper, outerSpacerUpper)
+    record_shape.tristrip(outerSpacerMiddle, innerSpacerMiddle)
+    record_shape.tristrip(innerSpacerUpper, centerHoleUpper)
+    record_shape.tristrip(innerSpacerMiddle, centerHoleMiddle)
+    record_shape.tristrip(outerEdgeLower, centerHoleLower)
 
     if info:
         vertices = record_shape.get_vertices()
