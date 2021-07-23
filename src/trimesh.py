@@ -99,7 +99,7 @@ class TriMesh():
         return np.array(lst)
 
     def get_faces_vertices(self):
-        for f in self.faces.to_generator():
+        for f in self.faces:
             yield tuple(map(lambda index: self.vertices[index], f))
 
     def get_faces_by_index(self):
@@ -124,10 +124,11 @@ class TriMesh():
             
 
     def merge(self, trimesh):
-        assert isinstance(trimesh, self)
+        assert type(self) == type(trimesh)
         self.add_vertices(trimesh.get_vertices().tolist())
         for face in trimesh.get_faces_vertices():
             self.add_face(face)
+        return self
 
     def _faces_removed(self, func, string = ''):
         number_of_faces = len(self)
@@ -142,7 +143,7 @@ class TriMesh():
         self._faces_removed(lambda x: list(
             filter(lambda f: f[0] != f[1] and f[0] != f[2] and f[1] != f[2], x)), 'Empty ')
 
-    def is_manifold(self):
+    def is_polytope(self):
         number_of_vertices = len(self.faces)
         number_of_faces = len(self.faces)
         edge_set = self.get_edges()
@@ -151,6 +152,9 @@ class TriMesh():
         count = abs(number_of_vertices - number_of_edges + number_of_faces)
         print('Count: ', count)
         return count == 2
+
+    def is_manifold(self):
+        return self.is_polytope()
 
     def trimesh_to_npmesh(self) -> mesh.Mesh:
         vertices = self.get_vertices()

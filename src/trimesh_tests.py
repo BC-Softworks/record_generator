@@ -69,3 +69,26 @@ def test_trimesh_cube_test():
 
     trimesh.trimesh_to_npmesh().save('stl/cubetest.stl', mode=stl.Mode.BINARY)
     assert trimesh.is_manifold()
+
+def test_trimesh_merge():
+    # Create squared pyramid
+    pyramid_trimesh = TriMesh()
+    vertices = [Vertex(1, 0, 1), Vertex(-1, 0, 1), Vertex(0, 1, 1), Vertex(0, -1, 1), Vertex(0, 0, 2)]
+    faces = [(0, 2, 4), (1, 2, 4), (0, 3, 4), (1, 3, 4)]
+    pyramid_trimesh.add_vertices(vertices)
+    pyramid_trimesh.add_faces_by_index(faces)
+
+    # Create cube
+    cube_trimesh = TriMesh()
+    vertices = [Vertex(-1, 0, 0), Vertex(1, 0, 0), Vertex(0, 1, 0), Vertex(0, -1, 0), Vertex(1, 0, 1), Vertex(-1, 0, 1), Vertex(0, 1, 1), Vertex(0, -1, 1)]
+
+    cube_trimesh.add_quad(vertices[0:4])
+    cube_trimesh.add_quad((vertices[0], vertices[2], vertices[5], vertices[6]))
+    cube_trimesh.add_quad((vertices[0], vertices[3], vertices[5], vertices[7]))
+    cube_trimesh.add_quad((vertices[1], vertices[3], vertices[4], vertices[7]))
+    cube_trimesh.add_quad((vertices[1], vertices[2], vertices[4], vertices[6]))
+
+    trimesh = pyramid_trimesh.merge(cube_trimesh)
+    trimesh.trimesh_to_npmesh().save('stl/house_test.stl', mode=stl.Mode.BINARY)
+    assert trimesh.is_manifold()
+    
