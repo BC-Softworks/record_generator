@@ -21,8 +21,16 @@ def test_trimesh_add_faces():
     trimesh.add_faces_by_index(faces)
     assert np.array_equal(trimesh.get_faces_by_index(), np.array(faces))
 
-def test_trimesh_remove_empty_faces():
+def test_trimesh_remove_duplicate_faces():
     trimesh = TriMesh()
+    vertices = [Vertex(1, 0, 0)]
+    faces = [(0, 0, 0), (0, 0, 0), (0, 0, 0)]
+    trimesh.add_vertices(vertices)
+    trimesh.add_faces_by_index(faces)
+    trimesh.remove_duplicate_faces()
+    assert np.array_equal(trimesh.get_faces_by_index(), np.array([(0, 0, 0)]))
+
+def test_trimesh_remove_empty_faces():
     trimesh = TriMesh()
     vertices = [Vertex(1, 0, 0), Vertex(0, 1, 0)]
     faces = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]
