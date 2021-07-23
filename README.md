@@ -1,4 +1,4 @@
-[![Pylint](https://github.com/BC-Softworks/record_generator/actions/workflows/python-app.yml/badge.svg)](https://github.com/BC-Softworks/record_generator/actions/workflows/python-app.yml)
+[![Pylint](https://github.com/BC-Softworks/record_generator/actions/workflows/pylint.yml/badge.svg)](https://github.com/BC-Softworks/record_generator/actions/workflows/pylint.yml)
 # Record Generator
 
 Converts wave and aifc files to an STL file of a properly encoded of 45 rpm record.
