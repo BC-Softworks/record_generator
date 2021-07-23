@@ -39,16 +39,16 @@ def create_polygon(rad, num, height=0):
 
 def calculate_record_shape(
         record_shape=tm.TriMesh(),
-        edge_num=8,
+        edge_num=32,
         info=True) -> mesh.Mesh:
     """ Combine the vectors in to an outer and inner circle """
-    baseline = rg.record_height - 1
+    baseline = rg.record_height - 1.75
 
     outerEdgeUpper = create_polygon(rg.RADIUS, edge_num, rg.record_height)
     outerEdgeLower = create_polygon(rg.RADIUS, edge_num)
 
-    outerSpacerUpper = create_polygon(rg.outer_rad + 0.25, edge_num, rg.record_height)
-    outerSpacerMiddle = create_polygon(rg.outer_rad + 0.25, edge_num, baseline)
+    outerSpacerUpper = create_polygon(rg.outer_rad + 0.5, edge_num, rg.record_height)
+    outerSpacerMiddle = create_polygon(rg.outer_rad + 0.5, edge_num, baseline)
 
     innerSpacerUpper = create_polygon(rg.inner_rad, edge_num, rg.record_height)
     innerSpacerMiddle = create_polygon(rg.inner_rad, edge_num, baseline)

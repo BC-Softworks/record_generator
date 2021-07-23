@@ -58,20 +58,20 @@ def draw_groove_cap(last_edge, rad, height, shape):
     shape.tristrip(stop1, stop2)
 
     # Fill in around cap
-    stop3 = [last_edge[-1], (rg.inner_rad, rad, rg.record_height)]
+    stop3 = [last_edge[-1], tm.Vertex(rg.inner_rad, rad, rg.record_height)]
     shape.add_vertex(stop3[1])
-    shape.tristrip(stop1, stop3)
+    shape.quadstrip(stop1, stop3)
 
     return shape
 
 
-def fill_remaining_area(r, shape, edge_num=20):
+def fill_remaining_area(r, shape, edge_num=32):
     """Fill the space between the last groove and the center hole"""
     remaining_space = create_polygon(rg.inner_rad, edge_num, rg.record_height)
     edge_of_groove = create_polygon(r, edge_num, rg.record_height)
     remaining_space.append(remaining_space[0])
     edge_of_groove.append(edge_of_groove[0])
-    shape.tristrip(remaining_space, edge_of_groove)
+    shape.quadstrip(remaining_space, edge_of_groove)
     return shape
 
 
@@ -98,12 +98,12 @@ def draw_spiral(samplenum, audio_array, index, rad, gH, shape, info):
         gH = groove_height(audio_array, samplenum)
         if index == 0:
             # Draw triangle to close outer part of record
-            shape.tristrip(groove_outer_upper, groove_outer_lower)
+            shape.quadstrip(groove_outer_upper, groove_outer_lower)
         else:
-            shape.tristrip(groove_inner_upper, groove_outer_lower)
+            shape.quadstrip(groove_inner_upper, groove_outer_lower)
 
-        shape.tristrip(groove_outer_lower, groove_inner_lower)
-        shape.tristrip(groove_inner_lower, groove_inner_upper)
+        shape.quadstrip(groove_outer_lower, groove_inner_lower)
+        shape.quadstrip(groove_inner_lower, groove_inner_upper)
         last_edge = groove_inner_upper
 
         index += 1
