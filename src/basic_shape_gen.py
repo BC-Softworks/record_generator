@@ -38,7 +38,7 @@ def create_polygon(rad, num, height=0):
     return lst
 
 def calculate_record_shape(
-        record_shape=tm.TriMesh(),
+        trimesh=tm.TriMesh(),
         edge_num=32,
         info=True) -> mesh.Mesh:
     """ Combine the vectors in to an outer and inner circle """
@@ -55,27 +55,26 @@ def calculate_record_shape(
 
     center_radius = rg.inner_hole / 2
     centerHoleUpper = create_polygon(center_radius, edge_num, rg.record_height)
-    centerHoleMiddle = create_polygon(center_radius, edge_num, baseline)
     centerHoleLower = create_polygon(center_radius, edge_num)
     
     # Draw vertical faces
-    record_shape.quadstrip(outerEdgeUpper, outerEdgeLower)
-    record_shape.quadstrip(outerSpacerUpper, outerSpacerMiddle)
-    record_shape.quadstrip(innerSpacerUpper, innerSpacerMiddle)
-    record_shape.quadstrip(centerHoleUpper, centerHoleLower)
+    trimesh.quadstrip(outerEdgeUpper, outerEdgeLower)
+    trimesh.quadstrip(outerSpacerUpper, outerSpacerMiddle)
+    trimesh.quadstrip(innerSpacerUpper, innerSpacerMiddle)
+    trimesh.quadstrip(centerHoleUpper, centerHoleLower)
 
     # Draw horizontial faces
-    record_shape.tristrip(outerEdgeUpper, outerSpacerUpper)
-    record_shape.tristrip(outerSpacerMiddle, innerSpacerMiddle)
-    record_shape.tristrip(innerSpacerUpper, centerHoleUpper)
-    record_shape.tristrip(innerSpacerMiddle, centerHoleMiddle)
-    record_shape.tristrip(outerEdgeLower, centerHoleLower)
+    trimesh.tristrip(outerEdgeUpper, outerSpacerUpper)
+    trimesh.tristrip(outerSpacerMiddle, innerSpacerMiddle)
+    trimesh.tristrip(innerSpacerUpper, centerHoleUpper)
+    trimesh.tristrip(outerEdgeLower, centerHoleLower)
 
     if info:
-        vertices = record_shape.get_vertices()
+        vertices = trimesh.get_vertices()
         print("Number of vertices: " + str(len(vertices)))
-        print("Number of faces: " + str(len(record_shape)))
-    return record_shape
+        print("Number of faces: " + str(len(trimesh)))
+        print("Number of edges: " + str(len(trimesh.get_edges())))
+    return trimesh
 
 
 def main():
@@ -84,7 +83,6 @@ def main():
     record_trimesh = calculate_record_shape()
     record_trimesh.remove_duplicate_faces()
     record_trimesh.remove_empty_faces()
-    record_trimesh.is_manifold()
 
     # Save mesh for debugging purposes
     if not os.path.isdir('stl'):
