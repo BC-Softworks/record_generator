@@ -37,7 +37,7 @@ rate_divisor = int(config['Groove Dimensions']['rateDivisor'])
 # 24 is the amplitude of signal (in 16 micron steps)
 amplitude = truncate((24 * microns_per_layer) / 1000, precision)
 # 6 is the measured in 16 microns steps, depth of tops of wave in groove from uppermost surface of record
-depth = truncate((6 * microns_per_layer) / 1000, precision)
+depth = truncate((6 * microns_per_layer) / 100, precision)
 # calculcate angular incrementation amount
 thetaIter = truncate((30 * samplingRate) / (DOWNSAMPLING * RPM), precision)
 incrNum = truncate(tau / thetaIter, precision)

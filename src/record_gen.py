@@ -37,9 +37,9 @@ def inner_lower_vertex(rad, theta, g_h) -> tm.Vertex:
 
 def groove_height(audio_array, sample_num):
     """Height of the groove extracted from the audio array"""
-    baseline = rg.record_height - rg.depth - rg.amplitude
+    baseline = rg.record_height - rg.depth
     amp = audio_array[int(rg.rate_divisor * sample_num)]
-    return rg.truncate( baseline * amp, rg.precision)
+    return rg.truncate( baseline + amp, rg.precision)
 
 def starting_cap(gH, shape):
     s1 = [outer_upper_vertex(rg.RADIUS, rg.amplitude, rg.bevel, 0),
@@ -131,9 +131,7 @@ def draw_grooves(audio_array, rad, shape=tm.TriMesh(), info=True):
     # Close remaining space between last groove and center hole
     return fill_remaining_area(rad, shape)
 
-
-def main(filename, stlname):
-
+def normalize_audio_data(filename):
     # Read in array of bytes as float
     audio_file = open(filename, 'rt', newline='')
     lst = [x for x in csv.reader(audio_file, delimiter=',')][0]
@@ -142,8 +140,14 @@ def main(filename, stlname):
     # Normalize the values
     current_max = max(lst)
     lst = [rg.truncate(abs(x) + current_max, rg.precision) for x in lst]
-    current_max *= 4
+    current_max *= 32
     normalized_depth = [rg.truncate(x / current_max, rg.precision) for x in lst]
+    return normalized_depth
+
+def main(filename, stlname):
+
+    # Read in array of bytes as float
+    normalized_depth = normalize_audio_data(filename)
 
     print("Generate record shape")
     record_mesh = calculate_record_shape(info=False)

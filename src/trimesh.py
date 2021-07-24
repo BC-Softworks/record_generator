@@ -143,18 +143,15 @@ class TriMesh():
         self._faces_removed(lambda x: list(
             filter(lambda f: f[0] != f[1] and f[0] != f[2] and f[1] != f[2], x)), 'Empty ')
 
-    def is_polytope(self):
+    def euler_characteristic(self):
         number_of_vertices = len(self.faces)
         number_of_faces = len(self.faces)
         edge_set = self.get_edges()
         number_of_edges = len(edge_set)
-        print("Number of edges: ", number_of_edges)
-        count = abs(number_of_vertices - number_of_edges + number_of_faces)
-        print('Count: ', count)
-        return count == 2
+        return abs(number_of_vertices - number_of_edges + number_of_faces)
 
     def is_manifold(self):
-        return self.is_polytope()
+        return self.euler_characteristic() <= 6
 
     def trimesh_to_npmesh(self) -> mesh.Mesh:
         vertices = self.get_vertices()
