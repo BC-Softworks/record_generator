@@ -150,9 +150,6 @@ class TriMesh():
         number_of_edges = len(edge_set)
         return abs(number_of_vertices - number_of_edges + number_of_faces)
 
-    def is_manifold(self):
-        return self.euler_characteristic() <= 6
-
     def trimesh_to_npmesh(self) -> mesh.Mesh:
         vertices = self.get_vertices()
         number_of_faces = len(self.faces)

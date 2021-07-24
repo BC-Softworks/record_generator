@@ -45,12 +45,12 @@ import stl
 def test_trimesh_pyramid_test():
     trimesh = TriMesh()
     vertices = [Vertex(1, 0, 0), Vertex(-1, 0, 0), Vertex(0, 1, 0), Vertex(0, -1, 0), Vertex(0, 0, 1)]
-    faces = [(0, 1, 2), (1, 2, 3), (0, 1, 4), (1, 2, 4), (2, 3, 4), (0, 3, 4)]
+    faces = [(0, 2, 3), (1, 2, 3), (0, 2, 4), (1, 2, 4), (0, 3, 4), (1, 3, 4)]
     trimesh.add_vertices(vertices)
     trimesh.add_faces_by_index(faces)
     trimesh.trimesh_to_npmesh().save('stl/pyramidtest.stl', mode=stl.Mode.BINARY)
     assert np.array_equal(trimesh.get_faces_by_index(), np.array(faces))
-    assert trimesh.is_manifold()
+    assert trimesh.euler_characteristic() == 3
 
 #Generated mesh saved to "stl/cubetest.stl"
 def test_trimesh_cube_test():
@@ -68,7 +68,7 @@ def test_trimesh_cube_test():
     trimesh.add_quad((vertices[1], vertices[2], vertices[4], vertices[6]))
 
     trimesh.trimesh_to_npmesh().save('stl/cubetest.stl', mode=stl.Mode.BINARY)
-    assert trimesh.is_manifold()
+    assert trimesh.euler_characteristic() == 2
 
 def test_trimesh_merge():
     # Create squared pyramid
@@ -90,5 +90,5 @@ def test_trimesh_merge():
 
     trimesh = pyramid_trimesh.merge(cube_trimesh)
     trimesh.trimesh_to_npmesh().save('stl/house_test.stl', mode=stl.Mode.BINARY)
-    assert trimesh.is_manifold()
+    assert trimesh.euler_characteristic() == 5
     

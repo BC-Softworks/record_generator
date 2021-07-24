@@ -45,7 +45,7 @@ def starting_cap(gH, shape):
     s1 = [outer_upper_vertex(rg.RADIUS, rg.amplitude, rg.bevel, 0),
           inner_upper_vertex(rg.RADIUS, rg.amplitude, rg.bevel, 0)]
     s2 = [outer_lower_vertex(rg.RADIUS, 0, gH), inner_lower_vertex(rg.RADIUS, 0, gH)]
-    shape.tristrip(s1, s2)
+    shape.quadstrip(s1, s2)
     return shape
 
 def draw_groove_cap(last_edge, rad, height, shape):
@@ -53,9 +53,7 @@ def draw_groove_cap(last_edge, rad, height, shape):
     stop1 = [outer_upper_vertex(rad, rg.amplitude, rg.bevel, 0),
              inner_upper_vertex(rad, rg.amplitude, rg.bevel, 0)]
     stop2 = [outer_lower_vertex(rad, 0, height), inner_lower_vertex(rad, 0, height)]
-
-    # Draw triangles
-    shape.tristrip(stop1, stop2)
+    shape.quadstrip(stop1, stop2)
 
     # Fill in around cap
     stop3 = [last_edge[-1], tm.Vertex(rg.inner_rad, rad, rg.record_height)]
@@ -140,7 +138,7 @@ def normalize_audio_data(filename):
     # Normalize the values
     current_max = max(lst)
     lst = [rg.truncate(abs(x) + current_max, rg.precision) for x in lst]
-    current_max *= 32
+    current_max *= 8
     normalized_depth = [rg.truncate(x / current_max, rg.precision) for x in lst]
     return normalized_depth
 
