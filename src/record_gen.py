@@ -48,19 +48,19 @@ def starting_cap(gH, shape):
     shape.quadstrip(s1, s2)
     return shape
 
-def draw_groove_cap(last_edge, rad, height, shape):
+def draw_groove_cap(last_edge, rad, height, trimesh):
     """Draws the ramp between the groove and inner cap"""
     stop1 = [outer_upper_vertex(rad, rg.amplitude, rg.bevel, 0),
              inner_upper_vertex(rad, rg.amplitude, rg.bevel, 0)]
     stop2 = [outer_lower_vertex(rad, 0, height), inner_lower_vertex(rad, 0, height)]
-    shape.quadstrip(stop1, stop2)
+    trimesh.quadstrip(stop1, stop2)
 
     # Fill in around cap
     stop3 = [last_edge[-1], tm.Vertex(rg.inner_rad, rad, rg.record_height)]
-    shape.add_vertex(stop3[1])
-    shape.quadstrip(stop1, stop3)
+    trimesh.add_vertex(stop3[1])
+    trimesh.quadstrip(stop1, stop3)
 
-    return shape
+    return trimesh
 
 
 def fill_remaining_area(r, shape, edge_num=32):
@@ -109,7 +109,7 @@ def draw_spiral(samplenum, audio_array, index, rad, gH, shape, info):
             print("Groove drawn: {}".format(index))
     return samplenum, last_edge, rad
 
-def draw_grooves(audio_array, rad, shape=tm.TriMesh(), info=True):
+def draw_grooves(audio_array, rad, trimesh=tm.TriMesh(), info=True):
     """rad is the radial postion of the vertex beign drawn"""
 
     # Inner while for groove position
@@ -118,16 +118,16 @@ def draw_grooves(audio_array, rad, shape=tm.TriMesh(), info=True):
     samplenum = 0
     gH = groove_height(audio_array, samplenum)
 
-    starting_cap(gH, shape)
+    starting_cap(gH, trimesh)
 
-    samplenum, last_edge, rad = draw_spiral(samplenum, audio_array, index, rad, gH, shape, info)
+    samplenum, last_edge, rad = draw_spiral(samplenum, audio_array, index, rad, gH, trimesh, info)
 
     # Draw groove cap
     gH = groove_height(audio_array, samplenum)
-    shape = draw_groove_cap(last_edge, rad, gH, shape)
+    trimesh = draw_groove_cap(last_edge, rad, gH, trimesh)
 
     # Close remaining space between last groove and center hole
-    return fill_remaining_area(rad, shape)
+    return fill_remaining_area(rad, trimesh)
 
 def normalize_audio_data(filename):
     # Read in array of bytes as float
@@ -148,15 +148,37 @@ def main(filename, stlname):
     normalized_depth = normalize_audio_data(filename)
 
     print("Generate record shape")
-    record_mesh = calculate_record_shape(info=False)
+    disc_mesh = calculate_record_shape(info=False)
+    disc_characteristic = disc_mesh.euler_characteristic()
+
+    # Save for debugging
+    disc_mesh.trimesh_to_npmesh().save('stl/disc_debug.stl', mode=stl.Mode.BINARY)
+    
+    # Draw grooves
     print("Drawing spiral object")
-    trimesh = draw_grooves(normalized_depth, rg.outer_rad, record_mesh)
-    print("Removing duplicate faces from shape spiral object")
+    groove_mesh = draw_grooves(normalized_depth, rg.outer_rad)
+    groove_characteristic = groove_mesh.euler_characteristic()
+
+    # Save for debugging
+    groove_mesh.trimesh_to_npmesh().save('stl/grooves_debug.stl', mode=stl.Mode.BINARY)
+
+    # Merge disc and grooves
+    print("Merge objects")
+    trimesh = disc_mesh.merge(groove_mesh)
+    
+    # Explicit clean up of the groove mesh
+    # Saves ~3Mbs of ram
+    del groove_mesh
+
+    print('Checking merged mesh for errors')
+    if trimesh.euler_characteristic() != groove_characteristic + disc_characteristic:
+        print('Merge failed')
+    
+    print("Removing duplicate faces from trimesh")
     trimesh.remove_duplicate_faces()
-    print("Removing empty faces from shape spiral object")
+    print("Removing empty faces from trimesh")
     trimesh.remove_empty_faces()
-    trimesh.is_manifold()
-    print("Converting shape to mesh object")
+    print("Converting trimesh to mesh object")
     full_mesh = trimesh.trimesh_to_npmesh()
     print("Saving mesh to " + "stl/" + stlname + ".stl")
     full_mesh.save("stl/" + stlname + ".stl", mode=stl.Mode.BINARY)
