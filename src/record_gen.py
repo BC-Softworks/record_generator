@@ -41,13 +41,6 @@ def groove_height(audio_array, sample_num):
     amp = audio_array[int(rg.rate_divisor * sample_num)]
     return rg.truncate( baseline + amp, rg.precision)
 
-def starting_cap(gH, shape):
-    s1 = [outer_upper_vertex(rg.RADIUS, rg.amplitude, rg.bevel, 0),
-          inner_upper_vertex(rg.RADIUS, rg.amplitude, rg.bevel, 0)]
-    s2 = [outer_lower_vertex(rg.RADIUS, 0, gH), 
-          inner_lower_vertex(rg.RADIUS, 0, gH)]
-    shape.quadstrip(s1, s2)
-    return shape
 
 def draw_groove_cap(last_edge, rad, height, trimesh):
     """Draws the ramp between the groove and inner cap"""
@@ -118,8 +111,6 @@ def draw_grooves(audio_array, rad, trimesh=tm.TriMesh(), info=True):
     # Inner while for groove position
     samplenum = 0
     gH = groove_height(audio_array, samplenum)
-
-    starting_cap(gH, trimesh)
 
     samplenum, last_edge, rad = draw_spiral(samplenum, audio_array, rad, gH, trimesh, info)
 
