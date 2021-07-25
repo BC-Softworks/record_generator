@@ -44,7 +44,8 @@ def groove_height(audio_array, sample_num):
 def starting_cap(gH, shape):
     s1 = [outer_upper_vertex(rg.RADIUS, rg.amplitude, rg.bevel, 0),
           inner_upper_vertex(rg.RADIUS, rg.amplitude, rg.bevel, 0)]
-    s2 = [outer_lower_vertex(rg.RADIUS, 0, gH), inner_lower_vertex(rg.RADIUS, 0, gH)]
+    s2 = [outer_lower_vertex(rg.RADIUS, 0, gH), 
+          inner_lower_vertex(rg.RADIUS, 0, gH)]
     shape.quadstrip(s1, s2)
     return shape
 
@@ -73,7 +74,9 @@ def fill_remaining_area(r, shape, edge_num=32):
     return shape
 
 
-def draw_spiral(samplenum, audio_array, index, rad, gH, shape, info):
+def draw_spiral(samplenum, audio_array, rad, gH, shape, info):
+    last_edge = []
+    index = 0
     arr_length = len(audio_array)
     while rg.rate_divisor * samplenum < (arr_length - rg.rate_divisor * rg.thetaIter + 1):
         groove_outer_upper = []
@@ -113,14 +116,12 @@ def draw_grooves(audio_array, rad, trimesh=tm.TriMesh(), info=True):
     """rad is the radial postion of the vertex beign drawn"""
 
     # Inner while for groove position
-    last_edge = None
-    index = 0
     samplenum = 0
     gH = groove_height(audio_array, samplenum)
 
     starting_cap(gH, trimesh)
 
-    samplenum, last_edge, rad = draw_spiral(samplenum, audio_array, index, rad, gH, trimesh, info)
+    samplenum, last_edge, rad = draw_spiral(samplenum, audio_array, rad, gH, trimesh, info)
 
     # Draw groove cap
     gH = groove_height(audio_array, samplenum)
@@ -138,7 +139,6 @@ def normalize_audio_data(filename):
     # Normalize the values
     current_max = max(lst)
     lst = [rg.truncate(abs(x) + current_max, rg.precision) for x in lst]
-    current_max *= 8
     normalized_depth = [rg.truncate(x / current_max, rg.precision) for x in lst]
     return normalized_depth
 
@@ -188,10 +188,10 @@ def main(filename, stlname):
 if __name__ == '__main__':
     m1 = memory_profiler.memory_usage()
     t1 = time.process_time()
-    main("audio/sample.csv", "sample_engraved")
+    main("audio/sine.csv", "sine")
     t2 = time.process_time()
     m2 = memory_profiler.memory_usage()
     time_diff = t2 - t1
     mem_diff = m2[0] - m1[0]
     print(
-        f"It took {time_diff:.2f} Secs and {mem_diff:.2f} Mb to execute this method")
+        f"It took {time_diff:.2f} Secs and {mem_diff:.2f} Mb to execute this script")
