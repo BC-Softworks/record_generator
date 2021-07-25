@@ -47,8 +47,11 @@ def normalize_data(arr, numch, depth):
 def write_channels(merged, filename):
     """ Write channels to csv file """
     csvfile = open(filename.split(".")[0] + '.csv', 'w', newline='')
-    for item in merged.astype(str):
-        csvfile.write(item + ',')
+    for item in merged.astype(float):
+        if item == round(item):
+            csvfile.write(str(int(item)) + ',')
+        else:
+            csvfile.write(str(item) + ',')
     # Write a zero at the end of the file to supress the extra ','
     csvfile.write('0')
     csvfile.close()
