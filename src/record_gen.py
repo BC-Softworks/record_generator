@@ -42,7 +42,7 @@ def groove_height(audio_array, sample_num):
     return rg.truncate( baseline + amp, rg.precision)
 
 
-def draw_groove_cap(last_edge, rad, height, trimesh):
+def draw_groove_cap(last_vertex, rad, height, trimesh):
     """Draws the ramp between the groove and inner cap"""
     stop1 = [outer_upper_vertex(rad, rg.amplitude, rg.bevel, 0),
              inner_upper_vertex(rad, rg.amplitude, rg.bevel, 0)]
@@ -50,8 +50,7 @@ def draw_groove_cap(last_edge, rad, height, trimesh):
     trimesh.quadstrip(stop1, stop2)
 
     # Fill in around cap
-    stop3 = [last_edge[-1], tm.Vertex(rg.inner_rad, rad, rg.record_height)]
-    trimesh.add_vertex(stop3[1])
+    stop3 = [last_vertex, tm.Vertex(rg.inner_rad, rad, rg.record_height)]
     trimesh.quadstrip(stop1, stop3)
 
     return trimesh
@@ -72,7 +71,6 @@ def draw_spiral(samplenum, audio_array, rad, gH, shape, info):
     index = 0
     arr_length = len(audio_array)
     while rg.rate_divisor * samplenum < (arr_length - rg.rate_divisor * rg.thetaIter + 1):
-        groove_outer_upper = []
         groove_outer_lower = []
         groove_inner_upper = []
         groove_inner_lower = []
@@ -81,7 +79,7 @@ def draw_spiral(samplenum, audio_array, rad, gH, shape, info):
         while theta < rg.tau:
             gH = groove_height(audio_array, samplenum)
             if index == 0:
-                groove_outer_upper.append(outer_upper_vertex(rad, rg.amplitude, rg.bevel, theta))
+                last_edge.append(outer_upper_vertex(rad, rg.amplitude, rg.bevel, theta))
             groove_outer_lower.append(inner_upper_vertex(rad, rg.amplitude, rg.bevel, theta))
             groove_inner_upper.append(outer_lower_vertex(rad, theta, gH))
             groove_inner_lower.append(inner_lower_vertex(rad, theta, gH))
@@ -90,11 +88,7 @@ def draw_spiral(samplenum, audio_array, rad, gH, shape, info):
             samplenum += 1
 
         gH = groove_height(audio_array, samplenum)
-        if index == 0:
-            # Draw triangle to close outer part of record
-            shape.quadstrip(groove_outer_upper, groove_outer_lower)
-        else:
-            shape.quadstrip(groove_inner_upper, groove_outer_lower)
+        shape.quadstrip(last_edge, groove_outer_lower)
 
         shape.quadstrip(groove_outer_lower, groove_inner_lower)
         shape.quadstrip(groove_inner_lower, groove_inner_upper)
@@ -116,7 +110,7 @@ def draw_grooves(audio_array, rad, trimesh=tm.TriMesh(), info=True):
 
     # Draw groove cap
     gH = groove_height(audio_array, samplenum)
-    trimesh = draw_groove_cap(last_edge, rad, gH, trimesh)
+    trimesh = draw_groove_cap(last_edge[-1], rad, gH, trimesh)
 
     # Close remaining space between last groove and center hole
     return fill_remaining_area(rad, trimesh)
@@ -130,6 +124,7 @@ def normalize_audio_data(filename):
     # Normalize the values
     current_max = max(lst)
     lst = [rg.truncate(abs(x) + current_max, rg.precision) for x in lst]
+    current_max *= 4
     normalized_depth = [rg.truncate(x / current_max, rg.precision) for x in lst]
     return normalized_depth
 
